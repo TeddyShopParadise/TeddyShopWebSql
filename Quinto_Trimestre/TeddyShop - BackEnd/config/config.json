@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "P3luch35.0s0",
+    "database": "Peluches.oso",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "postgres",
+    "password": "P3luch35.0s0",
+    "database": "Peluches.oso_test",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "postgres",
+    "password": "P3luch35.0s0",
+    "database": "Peluches.oso_prod",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  }
+}
