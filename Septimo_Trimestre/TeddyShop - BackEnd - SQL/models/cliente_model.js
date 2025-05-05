@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 
 // Define el esquema para la colección Cliente
 const clienteSchema = new mongoose.Schema({
-  nombreCliente: {
+  nombrecliente: {
     type: String, // NVARCHAR en SQL
     required: true
   },
-  telefonoCliente: {
+  telefonocliente: {
     type: String, // NVARCHAR en SQL
     required: true
   },
