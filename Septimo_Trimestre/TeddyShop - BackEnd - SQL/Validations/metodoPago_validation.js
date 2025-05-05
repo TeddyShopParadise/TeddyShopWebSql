@@ -2,7 +2,7 @@
 const Joi = require('@hapi/joi');
 
 const metodoPagoSchemaValidation = Joi.object({
-    nombreMetodoPago: Joi.string()
+    nombremetodopago: Joi.string()
         .required()
         .messages({
             'string.base': 'El nombre del método de pago debe ser una cadena de texto',

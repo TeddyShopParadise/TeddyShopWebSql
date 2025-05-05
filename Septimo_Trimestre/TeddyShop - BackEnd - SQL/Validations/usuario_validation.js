@@ -11,7 +11,7 @@ const usuarioSchemaValidation = Joi.object({
             'string.empty': 'El correo electrónico no puede estar vacío',
             'any.required': 'El correo electrónico es un campo requerido'
         }),
-    contraseña: Joi.string()
+    contrasena: Joi.string()
         .min(8)
         .max(100)
         .required()
@@ -40,22 +40,21 @@ const usuarioSchemaValidation = Joi.object({
     estado: Joi.boolean()
         .optional()
         .messages({
-            'boolean.base': 'El estado debe ser un valor booleano',
-            'any.required': 'El estado es un campo requerido'
+            'boolean.base': 'El estado debe ser un valor booleano'
         }),
-        empleados: Joi.array()
-            .items(Joi.string().length(24).hex())
-            .optional()
-            .messages({
-                'array.base': 'Los roles deben ser un arreglo de IDs válidos',
-                'string.length': 'Cada ID de empleado debe tener 24 caracteres'
-            }),
-    roles: Joi.array()
-        .items(Joi.string().length(24).hex())
+    empleado_id: Joi.array()
+        .items(Joi.number().integer())
+        .optional()
+        .messages({
+            'array.base': 'Los empleados deben ser un arreglo de IDs válidos',
+            'number.base': 'Cada ID de empleado debe ser un número entero',
+        }),
+    rol_id: Joi.array()
+        .items(Joi.number().integer())
         .optional()
         .messages({
             'array.base': 'Los roles deben ser un arreglo de IDs válidos',
-            'string.length': 'Cada ID de rol debe tener 24 caracteres'
+            'number.base': 'Cada ID de rol debe ser un número entero',
         })
 });
 

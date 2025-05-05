@@ -23,16 +23,16 @@ const empleadoSchemaValidation = Joi.object({
             'string.base': 'El nombre del empleado debe ser un texto',
             'any.required': 'El nombre del empleado es un campo requerido'
         }),
-    compania: Joi.string()
-        .length(24)
-        .hex()
+        companiaId: Joi.number()
+        .integer()
+        .positive()
         .optional()
         .messages({
-            'string.base': 'El ID de la compañía debe ser un texto en formato hexadecimal',
-            'string.length': 'El ID de la compañía debe tener exactamente 24 caracteres',
-            'string.hex': 'El ID de la compañía debe ser un valor hexadecimal válido',
-            'any.required': 'La compañía es un campo requerido'
+            'number.base': 'El ID de la compañía debe ser un número',
+            'number.integer': 'El ID de la compañía debe ser un número entero',
+            'number.positive': 'El ID de la compañía debe ser un número positivo'
         }),
+    
 });
 
 // Exportar la validación

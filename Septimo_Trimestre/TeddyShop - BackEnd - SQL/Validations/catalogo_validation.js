@@ -4,14 +4,14 @@ const Joi = require('@hapi/joi');
 const catalogoSchemaValidation = Joi.object({
     nombreCatalogo: Joi.string()
         .min(3)
-        .max(100)
+        .max(255) 
         .required()
         .pattern(/^[A-Za-záéíóúÁÉÍÓÚñÑ0-9 .#-]+$/)
         .messages({
             'string.base': 'El nombre del catálogo debe ser un texto',
             'string.empty': 'El nombre del catálogo no puede estar vacío',
             'string.min': 'El nombre del catálogo debe tener al menos 3 caracteres',
-            'string.max': 'El nombre del catálogo no debe exceder los 100 caracteres',
+            'string.max': 'El nombre del catálogo no debe exceder los 255 caracteres', 
             'any.required': 'El nombre del catálogo es un campo requerido'
         }),
     descripcionCatalogo: Joi.string()
@@ -28,7 +28,7 @@ const catalogoSchemaValidation = Joi.object({
         .messages({
             'boolean.base': 'La disponibilidad del catálogo debe ser un valor booleano'
         }),
-        imagen: Joi.string()
+    imagen: Joi.string()
         .uri()
         .optional()
         .allow('')
@@ -37,14 +37,14 @@ const catalogoSchemaValidation = Joi.object({
             'string.base': 'La imagen debe ser una URL válida',
             'string.uri': 'La imagen debe tener un formato de URL válido'
         }),
-    compania: Joi.string()
+    compania: Joi.number()  
         .optional()
         .messages({
-            'string.base': 'La compañía debe ser un ID válido',
+            'number.base': 'La compañía debe ser un ID válido',
             'any.required': 'La compañía es un campo requerido'
         }),
     productos: Joi.array()
-        .items(Joi.string().length(24).hex())
+        .items(Joi.number())  
         .optional()
 });
 

@@ -1,4 +1,3 @@
-// validaciones/productoValidation.js
 const Joi = require('@hapi/joi');
 
 const productoSchemaValidation = Joi.object({
@@ -8,7 +7,7 @@ const productoSchemaValidation = Joi.object({
             'string.base': 'El estilo del producto debe ser un texto',
             'any.required': 'El estilo del producto es un campo requerido'
         }),
-        disponibilidadProducto: Joi.number()
+    disponibilidadProducto: Joi.number()
         .integer()
         .min(0)
         .required()
@@ -24,41 +23,41 @@ const productoSchemaValidation = Joi.object({
             'string.base': 'El tamaño del producto debe ser un texto',
             'any.required': 'El tamaño del producto es un campo requerido'
         }),
-        imagen: Joi.alternatives().try(
-            Joi.string().uri({ allowRelative: false }), // Acepta URL válida
-            Joi.string().allow(''), // Permite cadenas vacías
-            Joi.number(), // Acepta números
-            Joi.boolean(), // Acepta valores booleanos
-            Joi.object(), // Permite objetos
-            Joi.array() // Permite arrays
-        ).optional()
+    imagen: Joi.string()
+        .uri()
+        .optional()
+        .allow('')
         .messages({
-            'alternatives.base': 'El parámetro imagen puede ser de cualquier tipo de datos (cadena, número, booleano, objeto, array).',
-            'string.base': 'La imagen debe ser una cadena de texto válida',
-            'string.uri': 'La imagen debe tener una URL válida',
-            'boolean.base': 'La imagen debe ser un valor booleano válido',
-            'number.base': 'La imagen debe ser un número',
-            'object.base': 'La imagen debe ser un objeto',
-            'array.base': 'La imagen debe ser un array'
+            'string.base': 'La imagen debe ser una cadena de texto',
+            'string.uri': 'La imagen debe tener una URL válida'
         }),
     historialPrecios: Joi.array()
-        .items(Joi.string().length(24).hex())
+        .items(Joi.number().integer().min(1))
         .optional()
         .messages({
-            'string.base': 'El ID del historial de precios debe ser un ID válido',
-            'string.length': 'El ID del historial de precios debe tener 24 caracteres'
+            'array.base': 'El historial de precios debe ser un arreglo',
+            'number.base': 'El ID del historial debe ser un número',
+            'number.integer': 'El ID debe ser un número entero',
+            'number.min': 'El ID debe ser mayor a 0'
         }),
     catalogos: Joi.array()
-        .items(Joi.string().length(24).hex())
+        .items(Joi.number().integer().min(1))
         .optional()
         .messages({
-            'string.base': 'El ID del catálogo debe ser un ID válido',
-            'string.length': 'El ID del catálogo debe tener 24 caracteres'
+            'array.base': 'Los catálogos deben ser un arreglo',
+            'number.base': 'El ID del catálogo debe ser un número',
+            'number.integer': 'El ID debe ser un número entero',
+            'number.min': 'El ID debe ser mayor a 0'
         }),
-        categorias: Joi.array()
-        .items(Joi.string().length(24).hex())
+    categorias: Joi.array()
+        .items(Joi.number().integer().min(1))
         .optional()
+        .messages({
+            'array.base': 'Las categorías deben ser un arreglo',
+            'number.base': 'El ID de la categoría debe ser un número',
+            'number.integer': 'El ID debe ser un número entero',
+            'number.min': 'El ID debe ser mayor a 0'
+        })
 });
 
-// Exportar la validación
 module.exports = { productoSchemaValidation };
