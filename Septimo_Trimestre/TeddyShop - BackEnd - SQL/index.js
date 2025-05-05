@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const { swaggerUi, swaggerSpec } = require('./swagger/swagger');
 const path = require('path');
 const http = require('http');
@@ -8,7 +7,8 @@ const cors = require('cors');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { v4: uuidv4 } = require('uuid'); 
-
+// Importar la configuración de la base de datos
+require('./config/database');  // Aquí estamos importando la configuración de Sequelize
 
 require('dotenv').config();
 // const https = require('https');
@@ -46,13 +46,7 @@ app.use(cors({
   credentials: true
 }));
 
-// Conexión a la base de datos MongoDB
-mongoose.connect('mongodb+srv://sa:PM02s8wkGc77jfO3@cluster0.hhmn9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
-  .then(() => {
-    console.log('Conexión exitosa a MongoDB');
 
-  })
-  .catch(err => console.error('Error de conexión a MongoDB:', err));
 
 // Configuración de Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
