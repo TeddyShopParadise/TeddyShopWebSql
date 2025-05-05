@@ -1,88 +1,131 @@
-//Controlador para metodoPago
-const logic = require('../Logic/metodoPago_logic'); 
-const { metodoPagoSchemaValidation } = require('../Validations/metodoPago_validation'); 
+// controllers/metodoPago_controller.js
 
-// Controlador para listar todos los métodos de pago
+const logic = require('../Logic/metodoPago_logic');
+const { metodoPagoSchemaValidation } = require('../Validations/metodoPago_validation');
+
+// Listar todos los métodos de pago
 const listarMetodosPago = async (req, res) => {
-    try {
-        const metodosPago = await logic.listarMetodosPago();
-        res.json(metodosPago);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
+  console.log('[Listar Métodos de Pago] Iniciando proceso...');
+  try {
+    const metodos = await logic.listarMetodosPago();
+    if (metodos.length === 0) {
+      console.log('[Listar Métodos de Pago] No se encontraron métodos');
+      return res.status(204).send();
     }
+    console.log('[Listar Métodos de Pago] Métodos encontrados:', metodos.length);
+    res.json(metodos);
+  } catch (err) {
+    console.error('[Listar Métodos de Pago] Error:', err);
+    res.status(500).json({
+      error: 'Error al listar métodos de pago',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para crear un nuevo método de pago
+// Crear nuevo método de pago
 const crearMetodoPago = async (req, res) => {
-    const body = req.body;
-    const { error, value } = metodoPagoSchemaValidation.validate(body);
+  console.log('[Crear Método de Pago] Iniciando proceso...');
+  const { error, value } = metodoPagoSchemaValidation.validate(req.body, { abortEarly: false });
 
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-    }
+  if (error) {
+    console.error('[Crear Método de Pago] Validación fallida:', error.details);
+    return res.status(400).json({
+      error: 'Validación fallida',
+      detalles: error.details.map(d => d.message)
+    });
+  }
 
-    try {
-        const nuevoMetodoPago = await logic.crearMetodoPago(value);
-        res.status(201).json(nuevoMetodoPago);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+  try {
+    const nuevoMetodo = await logic.crearMetodoPago(value);
+    console.log('[Crear Método de Pago] Creado:', nuevoMetodo._id || nuevoMetodo.id);
+    res.status(201).json(nuevoMetodo);
+  } catch (err) {
+    console.error('[Crear Método de Pago] Error:', err);
+    res.status(500).json({
+      error: 'Error al crear método de pago',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para actualizar un método de pago
+// Actualizar método de pago
 const actualizarMetodoPago = async (req, res) => {
-    const { id } = req.params;
-    const body = req.body;
+  const { id } = req.params;
+  console.log('[Actualizar Método de Pago] ID:', id);
+  const { _id, __v, ...resto } = req.body;
 
-    const { error, value } = metodoPagoSchemaValidation.validate(body);
+  const { error, value } = metodoPagoSchemaValidation.validate(resto, { abortEarly: false });
 
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
+  if (error) {
+    console.error('[Actualizar Método de Pago] Validación fallida:', error.details);
+    return res.status(400).json({
+      error: 'Validación fallida',
+      detalles: error.details.map(d => d.message)
+    });
+  }
+
+  try {
+    const actualizado = await logic.actualizarMetodoPago(id, value);
+    if (!actualizado) {
+      console.log('[Actualizar Método de Pago] No encontrado');
+      return res.status(404).json({ error: 'Método de pago no encontrado' });
     }
 
-    try {
-        const metodoPagoActualizado = await logic.actualizarMetodoPago(id, value);
-        if (!metodoPagoActualizado) {
-            return res.status(404).json({ error: 'Método de pago no encontrado' });
-        }
-        res.json(metodoPagoActualizado);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+    console.log('[Actualizar Método de Pago] Actualizado:', id);
+    res.json(actualizado);
+  } catch (err) {
+    console.error('[Actualizar Método de Pago] Error:', err);
+    res.status(500).json({
+      error: 'Error al actualizar método de pago',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para obtener un método de pago por su ID
+// Obtener un método de pago por ID
 const obtenerMetodoPagoPorId = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const metodoPago = await logic.buscarMetodoPagoPorId(id);
-        res.json(metodoPago);
-    } catch (err) {
-        if (err.message.includes('no encontrado')) {
-            return res.status(404).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Error interno del servidor' });
+  const { id } = req.params;
+  console.log('[Obtener Método de Pago] ID:', id);
+  try {
+    const metodo = await logic.buscarMetodoPagoPorId(id);
+    res.json(metodo);
+  } catch (err) {
+    console.error('[Obtener Método de Pago] Error:', err);
+    if (err.message.includes('no encontrado')) {
+      return res.status(404).json({ error: err.message });
     }
+    res.status(500).json({
+      error: 'Error al obtener método de pago',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para eliminar un método de pago por su ID
+// Eliminar un método de pago por ID
 const eliminarMetodoPago = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const metodoPagoEliminado = await logic.eliminarMetodoPago(id);
-        res.json(metodoPagoEliminado);
-    } catch (err) {
-        if (err.message.includes('no encontrado')) {
-            return res.status(404).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Error interno del servidor' });
+  const { id } = req.params;
+  console.log('[Eliminar Método de Pago] ID:', id);
+  try {
+    const eliminado = await logic.eliminarMetodoPago(id);
+    console.log('[Eliminar Método de Pago] Eliminado:', eliminado._id || eliminado.id);
+    res.json(eliminado);
+  } catch (err) {
+    console.error('[Eliminar Método de Pago] Error:', err);
+    if (err.message.includes('no encontrado')) {
+      return res.status(404).json({ error: err.message });
     }
+    res.status(500).json({
+      error: 'Error al eliminar método de pago',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
-// Exportar los controladores
+
 module.exports = {
-    listarMetodosPago,
-    crearMetodoPago,
-    actualizarMetodoPago,
-    obtenerMetodoPagoPorId,
-    eliminarMetodoPago
+  listarMetodosPago,
+  crearMetodoPago,
+  actualizarMetodoPago,
+  obtenerMetodoPagoPorId,
+  eliminarMetodoPago
 };

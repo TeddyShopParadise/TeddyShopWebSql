@@ -1,88 +1,127 @@
-//Controlador para HistorialPrecio
-const logic = require('../Logic/historialPrecio_logic'); 
-const { historialPrecioSchemaValidation } = require('../Validations/historialPrecio_validation'); 
+const logic = require('../Logic/historialPrecio_logic');
+const { historialPrecioSchemaValidation } = require('../Validations/historialPrecio_validation');
 
+console.log('[HistorialPrecio Controller] Cargado correctamente');
+
+// Listar todos los historiales de precios
 const listarHistorialPrecios = async (req, res) => {
-    try {
-        const historialesPrecio = await logic.listarHistorialPrecios();
-        res.json(historialesPrecio);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
+  console.log('[Listar HistorialPrecio] Iniciando proceso...');
+  try {
+    const historiales = await logic.listarHistorialPrecios();
+    if (historiales.length === 0) {
+      console.log('[Listar HistorialPrecio] No se encontraron registros');
+      return res.status(204).send();
     }
+    console.log('[Listar HistorialPrecio] Registros encontrados:', historiales.length);
+    res.json(historiales);
+  } catch (err) {
+    console.error('[Listar HistorialPrecio] Error en el proceso:', err);
+    res.status(500).json({
+      error: 'Error al listar historial de precios',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para crear un nuevo historial de precio
+// Crear un nuevo historial de precio
 const crearHistorialPrecio = async (req, res) => {
-    const body = req.body;
+  console.log('[Crear HistorialPrecio] Iniciando proceso...');
+  const { error, value } = historialPrecioSchemaValidation.validate(req.body, { abortEarly: false });
 
-    const { error, value } = historialPrecioSchemaValidation.validate(body);
+  if (error) {
+    console.error('[Crear HistorialPrecio] Validación fallida:', error.details);
+    return res.status(400).json({
+      error: 'Validación fallida',
+      detalles: error.details.map(d => d.message)
+    });
+  }
 
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-    }
-
-    try {
-        const nuevoHistorialPrecio = await logic.crearHistorialPrecio(value);
-        res.status(201).json(nuevoHistorialPrecio);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+  try {
+    const nuevoHistorial = await logic.crearHistorialPrecio(value);
+    console.log('[Crear HistorialPrecio] Historial creado:', nuevoHistorial.id);
+    res.status(201).json(nuevoHistorial);
+  } catch (err) {
+    console.error('[Crear HistorialPrecio] Error en el proceso:', err);
+    res.status(500).json({
+      error: 'Error al crear historial de precio',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para actualizar un historial de precio
+// Actualizar un historial de precio
 const actualizarHistorialPrecio = async (req, res) => {
-    const { id } = req.params;
-    const body = req.body;
+  const { id } = req.params;
+  console.log('[Actualizar HistorialPrecio] ID:', id);
+  const { error, value } = historialPrecioSchemaValidation.validate(req.body, { abortEarly: false });
 
-    const { error, value } = historialPrecioSchemaValidation.validate(body);
+  if (error) {
+    console.error('[Actualizar HistorialPrecio] Validación fallida:', error.details);
+    return res.status(400).json({
+      error: 'Validación fallida',
+      detalles: error.details.map(d => d.message)
+    });
+  }
 
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
+  try {
+    const actualizado = await logic.actualizarHistorialPrecio(id, value);
+    console.log('[Actualizar HistorialPrecio] Actualizado ID:', id);
+    res.json(actualizado);
+  } catch (err) {
+    console.error('[Actualizar HistorialPrecio] Error en el proceso:', err);
+    if (err.message.includes('no encontrado')) {
+      return res.status(404).json({ error: err.message });
     }
-
-    try {
-        const historialPrecioActualizado = await logic.actualizarHistorialPrecio(id, value);
-        if (!historialPrecioActualizado) {
-            return res.status(404).json({ error: 'Historial de precio no encontrado' });
-        }
-        res.json(historialPrecioActualizado);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+    res.status(500).json({
+      error: 'Error al actualizar historial de precio',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para obtener un historial de precio por su ID
+// Obtener un historial por ID
 const obtenerHistorialPrecioPorId = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const historialPrecio = await logic.buscarHistorialPrecioPorId(id);
-        res.json(historialPrecio);
-    } catch (err) {
-        if (err.message.includes('no encontrado')) {
-            return res.status(404).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Error interno del servidor' });
+  const { id } = req.params;
+  console.log('[Obtener HistorialPrecio] ID:', id);
+  try {
+    const historial = await logic.buscarHistorialPrecioPorId(id);
+    res.json(historial);
+  } catch (err) {
+    console.error('[Obtener HistorialPrecio] Error en el proceso:', err);
+    if (err.message.includes('no encontrado')) {
+      return res.status(404).json({ error: err.message });
     }
+    res.status(500).json({
+      error: 'Error al obtener historial de precio',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para eliminar un historial de precio por su ID
+// Eliminar un historial
 const eliminarHistorialPrecio = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const historialPrecioEliminado = await logic.eliminarHistorialPrecio(id);
-        res.json(historialPrecioEliminado);
-    } catch (err) {
-        if (err.message.includes('no encontrado')) {
-            return res.status(404).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Error interno del servidor' });
+  const { id } = req.params;
+  console.log('[Eliminar HistorialPrecio] ID:', id);
+  try {
+    const eliminado = await logic.eliminarHistorialPrecio(id);
+    console.log('[Eliminar HistorialPrecio] Eliminado ID:', eliminado.id);
+    res.json(eliminado);
+  } catch (err) {
+    console.error('[Eliminar HistorialPrecio] Error en el proceso:', err);
+    if (err.message.includes('no encontrado')) {
+      return res.status(404).json({ error: err.message });
     }
+    res.status(500).json({
+      error: 'Error al eliminar historial de precio',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
-// Exportar los controladores
+
 module.exports = {
-    listarHistorialPrecios,
-    crearHistorialPrecio,
-    actualizarHistorialPrecio,
-    obtenerHistorialPrecioPorId,
-    eliminarHistorialPrecio
+  listarHistorialPrecios,
+  crearHistorialPrecio,
+  actualizarHistorialPrecio,
+  obtenerHistorialPrecioPorId,
+  eliminarHistorialPrecio
 };
