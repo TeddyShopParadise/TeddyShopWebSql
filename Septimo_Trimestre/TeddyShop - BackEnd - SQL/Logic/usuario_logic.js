@@ -1,78 +1,81 @@
-const Usuario = require('../models/usuario_model');
-const Empleado = require('../models/empleado_model');
-const Roles = require('../models/roles_model');
+const db = require('../modelsSQL');
+const { Op } = require('sequelize');
 
-// Función asíncrona para crear un nuevo usuario
+const Usuario  = db.Usuario;
+const Empleado = db.Empleado;
+const Roles    = db.Roles;
+
+// Crear un nuevo usuario
 async function crearUsuario(body) {
-    let usuario = new Usuario({
-        email: body.email,
-        contraseña: body.contraseña, 
-        username: body.username,
-        estado: body.estado,
-        empleados: body.empleados, 
-        roles: body.roles 
-    });
+  const existe = await Usuario.findOne({ where: { email: body.email } });
+  if (existe) throw new Error('Ya existe un usuario con este correo');
 
-    return await usuario.save();
+  const usuario = await Usuario.create({
+    email: body.email,
+    contrasena: body.contrasena,
+    username: body.username,
+    estado: body.estado,
+    empleado_id: body.empleado_id || null,
+    rol_id: body.rol_id || null
+  });
+
+  return buscarUsuarioPorId(usuario.id);
 }
 
-// Función asíncrona para actualizar un usuario
+// Actualizar un usuario
 async function actualizarUsuario(id, body) {
-    let usuario = await Usuario.findByIdAndUpdate(id, {
-        $set: {
-            email: body.email,
-            contraseña: body.contraseña, 
-            username: body.username,
-            estado: body.estado,
-            empleados: body.empleados, 
-            roles: body.roles 
-        }
-    }, { new: true })
-    .populate('roles', 'nombre')
-    .populate('empleados', 'nombreEmpleado'); 
+  const usuario = await Usuario.findByPk(id);
+  if (!usuario) throw new Error('Usuario no encontrado');
 
-    return usuario;
+  await usuario.update({
+    email: body.email,
+    contrasena: body.contrasena,
+    username: body.username,
+    estado: body.estado,
+    empleado_id: body.empleado_id || null,
+    rol_id: body.rol_id || null
+  });
+
+  return buscarUsuarioPorId(id);
 }
 
-// Función asíncrona para listar todos los usuarios
+// Listar todos los usuarios
 async function listarUsuarios() {
-    return await Usuario.find()
-        .populate('roles', 'nombre')
-        .populate('empleados', 'nombreEmpleado'); 
+  const usuarios = await Usuario.findAll({
+    include: [
+      { model: Empleado, as: 'empleado', attributes: ['nombreEmpleado'] },
+      { model: Roles,    as: 'rol',      attributes: ['nombre'] }
+    ],
+    order: [['id', 'DESC']]
+  });
+  return usuarios;
 }
 
+// Buscar un usuario por su ID
 async function buscarUsuarioPorId(id) {
-    try {
-        const usuario = await Usuario.findById(id)
-            .populate('roles', 'nombre')
-            .populate('empleados', 'nombreEmpleado'); 
-        if (!usuario) {
-            throw new Error(`Usuario con ID ${id} no encontrado`);
-        }
-        return usuario;
-    } catch (err) {
-        console.error(`Error al buscar el usuario por ID: ${err.message}`);
-        throw err;
-    }
+  const usuario = await Usuario.findByPk(id, {
+    include: [
+      { model: Empleado, as: 'empleado', attributes: ['nombreEmpleado'] },
+      { model: Roles,    as: 'rol',      attributes: ['nombre'] }
+    ]
+  });
+  if (!usuario) throw new Error(`Usuario con ID ${id} no encontrado`);
+  return usuario;
 }
-// Función asíncrona para eliminar un usuario por su ID
+
+// Eliminar un usuario por su ID
 async function eliminarUsuario(id) {
-    try {
-        const usuario = await Usuario.findByIdAndDelete(id);
-        if (!usuario) {
-            throw new Error(`Usuario con ID ${id} no encontrado`);
-        }
-        return usuario;
-    } catch (err) {
-        console.error(`Error al eliminar el usuario: ${err.message}`);
-        throw err;
-    }
+  const usuario = await Usuario.findByPk(id);
+  if (!usuario) throw new Error(`Usuario con ID ${id} no encontrado`);
+
+  await usuario.destroy();
+  return usuario;
 }
 
 module.exports = {
-    crearUsuario,
-    actualizarUsuario,
-    listarUsuarios,
-    buscarUsuarioPorId,
-    eliminarUsuario
+  crearUsuario,
+  actualizarUsuario,
+  listarUsuarios,
+  buscarUsuarioPorId,
+  eliminarUsuario
 };

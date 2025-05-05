@@ -60,7 +60,7 @@ async function listarFacturas() {
     try {
       const facturas = await Factura.find()
         .populate('pedido', 'numPedido')
-        .populate('cliente', 'nombreCliente')
+        .populate('cliente', 'nombrecliente')
         .populate({
           path: 'detallesFactura',
           populate: [
@@ -86,7 +86,7 @@ async function buscarFacturaPorId(id) {
     try {
       const factura = await Factura.findById(id)
         .populate('pedido', 'numPedido')
-        .populate('cliente', 'nombreCliente')
+        .populate('cliente', 'nombrecliente')
         .populate({
           path: 'detallesFactura',
           populate: [

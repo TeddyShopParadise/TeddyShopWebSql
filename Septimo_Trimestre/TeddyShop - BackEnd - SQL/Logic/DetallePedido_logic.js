@@ -1,6 +1,6 @@
 const DetallePedido = require('../models/detallePedido_model');
 const Pedido = require('../models/pedido_model');
-const Producto = require('../models/producto_model');
+const Producto = require('../modelsSQL/producto_model');
 const Inventario = require('../models/inventario_model');
 const Movimiento = require('../models/movimiento_model');
 
@@ -9,7 +9,6 @@ async function crearDetallePedido(body) {
     session.startTransaction();
 
     try {
-        // Buscar el producto para validar el tamaño
         const producto = await Producto.findById(body.idProducto);
         if (!producto) {
             throw new Error('Producto no encontrado');

@@ -1,91 +1,93 @@
-    const Producto = require('../models/producto_model');
-    const HistorialPrecio = require('../models/historialPrecio_model'); 
-    const Catalogo = require('../models/catalogo_model'); 
-    const Categoria = require('../models/categoria_model'); 
+const { Op } = require('sequelize');
+const db = require('../modelsSQL');
 
-    // Función asíncrona para crear un nuevo producto
-    async function crearProducto(body) {
-        console.log('HistorialPrecios recibido:', body.historialPrecios);
-        const producto = new Producto({
-            estiloProducto: body.estiloProducto, 
-            disponibilidadProducto: body.disponibilidadProducto,
-            tamañoProducto: body.tamañoProducto,
-            imagen: body.imagen,
-            historialPrecios: body.historialPrecios || [],
-            catalogos: body.catalogos || [],
-            categorias: body.categorias || []
-        });
+const Producto        = db.Producto;
+const HistorialPrecio = db.HistorialPrecio;
+const Catalogo        = db.Catalogo;
+const Categoria       = db.Categoria;
 
-        return await producto.save();
-    }
+// Crear un nuevo producto
+async function crearProducto(body) {
+  const existe = await Producto.findOne({ where: { estiloProducto: body.estiloProducto } });
+  if (existe) throw new Error('Ya existe un producto con este estilo');
 
-    // Función asíncrona para actualizar un producto
-    async function actualizarProducto(id, body) {
-        console.log('HistorialPrecios recibido:', body.historialPrecios);
-        const producto = await Producto.findByIdAndUpdate(id, {
-            
-            $set: {
-                estiloProducto: body.estiloProducto,
-                disponibilidadProducto: body.disponibilidadProducto,
-                tamañoProducto: body.tamañoProducto,
-                imagen: body.imagen,
-                historialPrecios: body.historialPrecios || [],
-                catalogos: body.catalogos || [],
-                categorias: body.categorias || []
-            }
-        }, { new: true });
+  const producto = await Producto.create({
+    estiloProducto: body.estiloProducto,
+    disponibilidadProducto: body.disponibilidadProducto,
+    tamañoProducto: body.tamañoProducto,
+    imagen: body.imagen,
+    historial_precio_id: body.historialPrecios?.[0] || null 
+  });
 
-        return producto;
-    }
+  if (body.catalogos?.length) {
+    await producto.setCatalogos(body.catalogos);
+  }
 
-    // Función asíncrona para listar todos los productos
-    async function listarProductos() {
-        const productos = await Producto.find()
-            .populate('historialPrecios')
-            .populate('catalogos')
-            .populate('categorias');
-            
-        return productos;
-    }
+  if (body.categorias?.length) {
+    await producto.setCategorias(body.categorias);
+  }
 
-    // Función asíncrona para buscar un producto por su ID
-    async function buscarProductoPorId(id) {
-        try {
-            const producto = await Producto.findById(id)
-                .populate('historialPrecios')
-                .populate('catalogos')
-                .populate('categorias');
+  return buscarProductoPorId(producto.id);
+}
 
-            if (!producto) {
-                throw new Error(`Producto con ID ${id} no encontrado`);
-            }
-            return producto;
-        } catch (err) {
-            console.error(`Error al buscar el producto por ID: ${err.message}`);
-            throw err;
-        }
-    }
+// Actualizar un producto
+async function actualizarProducto(id, body) {
+  const producto = await Producto.findByPk(id);
+  if (!producto) throw new Error('Producto no encontrado');
 
-    // Función asíncrona para eliminar un producto por su ID
-    async function eliminarProducto(id) {
-        try {
-            const producto = await Producto.findByIdAndDelete(id);
-            if (!producto) {
-                throw new Error(`Producto con ID ${id} no encontrado`);
-            }
-            return producto;
-        } catch (err) {
-            console.error(`Error al eliminar el producto: ${err.message}`);
-            throw err;
-        }
-    }
+  await producto.update({
+    estiloProducto: body.estiloProducto,
+    disponibilidadProducto: body.disponibilidadProducto,
+    tamañoProducto: body.tamañoProducto,
+    imagen: body.imagen,
+    historial_precio_id: body.historialPrecios?.[0] || null 
+  });
 
+  if (body.catalogos) await producto.setCatalogos(body.catalogos);
+  if (body.categorias) await producto.setCategorias(body.categorias);
 
-    
-    module.exports = {
-        crearProducto,
-        actualizarProducto,
-        listarProductos,
-        buscarProductoPorId,
-        eliminarProducto
-    };
+  return buscarProductoPorId(id);
+}
+
+// Listar todos los productos
+async function listarProductos() {
+  const products = await Producto.findAll({
+    include: [
+      { model: HistorialPrecio, as: 'HistorialPrecio' },
+      { model: Catalogo,        as: 'Catalogos', through: { attributes: [] } },
+      { model: Categoria,       as: 'Categorias', through: { attributes: [] } }
+    ],
+    order: [['created_at', 'DESC']]
+  });
+  return products;
+}
+
+// Buscar un producto por su ID
+async function buscarProductoPorId(id) {
+  const producto = await Producto.findByPk(id, {
+    include: [
+      { model: HistorialPrecio, as: 'HistorialPrecio' },
+      { model: Catalogo,        as: 'Catalogos', through: { attributes: [] } },
+      { model: Categoria,       as: 'Categorias', through: { attributes: [] } }
+    ]
+  });
+  if (!producto) throw new Error(`Producto con ID ${id} no encontrado`);
+  return producto;
+}
+
+// Eliminar un producto por su ID
+async function eliminarProducto(id) {
+  const producto = await Producto.findByPk(id);
+  if (!producto) throw new Error(`Producto con ID ${id} no encontrado`);
+
+  await producto.destroy();
+  return producto;
+}
+
+module.exports = {
+  crearProducto,
+  actualizarProducto,
+  listarProductos,
+  buscarProductoPorId,
+  eliminarProducto
+};

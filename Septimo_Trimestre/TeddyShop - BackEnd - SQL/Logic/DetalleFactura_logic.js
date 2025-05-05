@@ -1,6 +1,6 @@
 const DetalleFactura = require('../models/detalleFactura_model');
 const Inventario = require('../models/inventario_model');
-const Producto = require('../models/producto_model');
+const Producto = require('../modelsSQL/producto_model');
 const Factura = require('../models/factura_model');
 
 // Función asíncrona para crear un nuevo detalle de factura

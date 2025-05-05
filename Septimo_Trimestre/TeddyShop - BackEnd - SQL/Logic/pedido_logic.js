@@ -1,5 +1,5 @@
 const DetallePedido = require('../models/detallePedido_model');
-const Producto = require('../models/producto_model');
+const Producto = require('../modelsSQL/producto_model');
 const Factura = require('../models/factura_model');
 const Cliente = require('../models/cliente_model');
 const Pedido = require('../models/pedido_model');
@@ -9,15 +9,15 @@ const { separarNombreYApellido } = require('./cliente_logic');
 // Crear nuevo pedido
 const crearPedido = async (body) => {
     try {
-      let cliente = await Cliente.findOne({ telefonoCliente: body.numeroComprador });
+      let cliente = await Cliente.findOne({ telefonocliente: body.numeroComprador });
   
       if (!cliente) {
         const { nombre, apellido } = separarNombreYApellido(body.nombreComprador);
         const nuevoCliente = new Cliente({
-          nombreCliente: body.nombreComprador,
+        nombrecliente: body.nombreComprador,
           nombre,
           apellido,
-          telefonoCliente: body.numeroComprador,
+          telefonocliente: body.numeroComprador,
           pedidos: [],
           facturas: []
         });
@@ -116,7 +116,7 @@ async function actualizarPedido(id, body) {
 // Listar todos los pedidos
 async function listarPedidos() {
     const pedidos = await Pedido.find()
-        .populate('cliente', 'telefonoCliente')
+        .populate('cliente', 'telefonocliente')
         .populate({
             path: 'detallesPedido',
             populate: { path: 'idProducto' }
@@ -133,7 +133,7 @@ async function listarPedidos() {
 async function buscarPedidoPorId(id) {
     try {
         const pedido = await Pedido.findById(id)
-            .populate('cliente', 'telefonoCliente')
+            .populate('cliente', 'telefonocliente')
             .populate({
                 path: 'detallesPedido',
                 populate: { path: 'idProducto' }

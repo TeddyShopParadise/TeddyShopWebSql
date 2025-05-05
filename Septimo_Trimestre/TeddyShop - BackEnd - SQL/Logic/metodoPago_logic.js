@@ -1,64 +1,57 @@
-const MetodoPago = require('../models/metodoPago_model'); 
-const Factura = require('../models/factura_model'); 
+// controllers/metodoPagoController.js
 
-// Función asíncrona para crear un nuevo método de pago
+const db = require('../modelsSQL'); // Asegúrate de tener este index que exporta todos los modelos
+const MetodoPago = db.MetodoPago;
+
+// Crear un nuevo método de pago
 async function crearMetodoPago(body) {
-    const metodoPago = new MetodoPago({
-        nombreMetodoPago: body.nombreMetodoPago
-    });
+  const metodoPago = await MetodoPago.create({
+    nombremetodopago: body.nombremetodopago
+  });
 
-    return await metodoPago.save();
+  return buscarMetodoPagoPorId(metodoPago.id);
 }
 
-// Función asíncrona para actualizar un método de pago
+// Actualizar un método de pago
 async function actualizarMetodoPago(id, body) {
-    const metodoPago = await MetodoPago.findByIdAndUpdate(id, {
-        $set: {
-            nombreMetodoPago: body.nombreMetodoPago
-        }
-    }, { new: true });
+  const metodoPago = await MetodoPago.findByPk(id);
+  if (!metodoPago) throw new Error(`Método de pago con ID ${id} no encontrado`);
 
-    return metodoPago;
+  await metodoPago.update({
+    nombremetodopago: body.nombremetodopago
+  });
+
+  return buscarMetodoPagoPorId(id);
 }
 
-// Función asíncrona para listar todos los métodos de pago
+// Listar todos los métodos de pago
 async function listarMetodosPago() {
-    const metodosPago = await MetodoPago.find()
-    return metodosPago;
+  const metodosPago = await MetodoPago.findAll({
+    order: [['id', 'DESC']]
+  });
+  return metodosPago;
 }
 
-// Función asíncrona para buscar un método de pago por su ID
+// Buscar un método de pago por su ID
 async function buscarMetodoPagoPorId(id) {
-    try {
-        const metodoPago = await MetodoPago.findById(id)
-        if (!metodoPago) {
-            throw new Error(`Método de pago con ID ${id} no encontrado`);
-        }
-        return metodoPago;
-    } catch (err) {
-        console.error(`Error al buscar el método de pago por ID: ${err.message}`);
-        throw err;
-    }
+  const metodoPago = await MetodoPago.findByPk(id);
+  if (!metodoPago) throw new Error(`Método de pago con ID ${id} no encontrado`);
+  return metodoPago;
 }
 
-// Función asíncrona para eliminar un método de pago por su ID
+// Eliminar un método de pago por su ID
 async function eliminarMetodoPago(id) {
-    try {
-        const metodoPago = await MetodoPago.findByIdAndDelete(id);
-        if (!metodoPago) {
-            throw new Error(`Método de pago con ID ${id} no encontrado`);
-        }
-        return metodoPago;
-    } catch (err) {
-        console.error(`Error al eliminar el método de pago: ${err.message}`);
-        throw err;
-    }
+  const metodoPago = await MetodoPago.findByPk(id);
+  if (!metodoPago) throw new Error(`Método de pago con ID ${id} no encontrado`);
+
+  await metodoPago.destroy();
+  return metodoPago;
 }
 
 module.exports = {
-    crearMetodoPago,
-    actualizarMetodoPago,
-    listarMetodosPago,
-    buscarMetodoPagoPorId,
-    eliminarMetodoPago
+  crearMetodoPago,
+  actualizarMetodoPago,
+  listarMetodosPago,
+  buscarMetodoPagoPorId,
+  eliminarMetodoPago
 };

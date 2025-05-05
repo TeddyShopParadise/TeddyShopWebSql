@@ -1,93 +1,138 @@
-const Catalogo = require('../models/catalogo_model');
-const Producto = require('../models/producto_model');
+// Importación correcta de los modelos
+const { Catalogo, Producto, Compania } = require('../modelsSQL');
+const { Op } = require('sequelize');
 
-// Función asíncrona para crear un catálogo
 async function crearCatalogo(body) {
-    // Verificar si ya existe un catálogo con el mismo nombre
-    const catalogoExistente = await Catalogo.findOne({ nombreCatalogo: body.nombreCatalogo });
+    const catalogoExistente = await Catalogo.findOne({
+        where: {
+            nombrecatalogo: body.nombreCatalogo
+        }
+    });
 
     if (catalogoExistente) {
         throw new Error('Ya existe un catálogo con este nombre');
     }
 
-    let catalogo = new Catalogo({
+    // Crear el catálogo con Sequelize
+    const catalogo = await Catalogo.create({
         nombreCatalogo: body.nombreCatalogo,
         descripcionCatalogo: body.descripcionCatalogo,
-        disponibilidadCatalogo: body.disponibilidadCatalogo,
+        disponibilidadcatalogo: body.disponibilidadCatalogo,
         imagen: body.imagen,
-        compania: body.compania,
-        productos: body.productos,
+        compania_id: body.compania
     });
 
-    return await catalogo.save();
-}
-
-// Función asíncrona para actualizar un catálogo
-async function actualizarCatalogo(id, body) {
-    let catalogo = await Catalogo.findByIdAndUpdate(id, {
-        $set: {
-            nombreCatalogo: body.nombreCatalogo,
-            descripcionCatalogo: body.descripcionCatalogo,
-            disponibilidadCatalogo: body.disponibilidadCatalogo,
-            imagen: body.imagen,
-            compania: body.compania,
-            productos: body.productos,
-        }
-    }, { new: true });
+    if (body.productos && body.productos.length > 0) {
+        await catalogo.setProductos(body.productos);
+    }
 
     return catalogo;
 }
 
-// Función asíncrona para desactivar un catálogo (cambiar su disponibilidad)
-async function desactivarCatalogo(id) {
-    let catalogo = await Catalogo.findByIdAndUpdate(id, {
-        $set: {
-            disponibilidadCatalogo: false
-        }
-    }, { new: true });
+async function actualizarCatalogo(id, body) {
+    const catalogo = await Catalogo.findByPk(id);
+    if (!catalogo) {
+        throw new Error('Catálogo no encontrado');
+    }
 
+    await catalogo.update({
+        nombreCatalogo: body.nombreCatalogo,
+        descripcionCatalogo: body.descripcionCatalogo,
+        disponibilidadcatalogo: body.disponibilidadCatalogo,
+        imagen: body.imagen,
+        compania_id: body.compania
+    });
+
+    if (body.productos) {
+        await catalogo.setProductos(body.productos);
+    }
+
+    return catalogo;
+}
+
+// Función asíncrona para desactivar un catálogo 
+async function desactivarCatalogo(id) {
+    const catalogo = await Catalogo.findByPk(id);
+    if (!catalogo) {
+        throw new Error('Catálogo no encontrado');
+    }
+
+    await catalogo.update({ disponibilidadcatalogo: false });
     return catalogo;
 }
 
 // Función asíncrona para listar catálogos activos
 async function listarCatalogosActivos() {
-    let catalogos = await Catalogo.find({ disponibilidadCatalogo: true })
-    .populate('compania', 'nombreEmpresa'); 
-    return catalogos;
+    return await Catalogo.findAll({
+        where: { disponibilidadcatalogo: true },
+        include: [
+            {
+                model: Compania,
+                attributes: ['nombreempresa']
+            },
+            {
+                model: Producto,
+                attributes: ['id', 'tamanoproducto'],
+                through: { attributes: [] }
+            }
+        ]
+    });
 }
 
-// Función asíncrona para buscar un catálogo por su ID
+// Función asíncrona para buscar un catálogo por su ID 
 async function buscarCatalogoPorId(id) {
-    try {
-        const catalogo = await Catalogo.findById(id)
-            .populate('compania', 'nombreEmpresa') 
-        if (!catalogo) {
-            throw new Error(`Catálogo con ID ${id} no encontrado`);
-        }
-        return catalogo;
-    } catch (err) {
-        console.error(`Error al buscar el catálogo por ID: ${err.message}`);
-        throw err;
+    const catalogo = await Catalogo.findByPk(id, {
+        include: [
+            {
+                model: Compania,
+                attributes: ['nombreempresa']
+            },
+            {
+                model: Producto,
+                attributes: ['id', 'tamanoproducto'],
+                through: { attributes: [] }
+            }
+        ]
+    });
+
+    if (!catalogo) {
+        throw new Error(`Catálogo con ID ${id} no encontrado`);
     }
+
+    return catalogo;
 }
 
-// Función asíncrona para guardar una colección de catálogos
+// Función asíncrona para guardar una colección de catálogos 
 async function guardarCatalogos(catalogos) {
+    // Asegúrate de importar sequelize correctamente
+    const { sequelize } = require('../modelsSQL');
+    const transaction = await sequelize.transaction();
     try {
         const resultados = [];
-        for (let catalogoData of catalogos) {
-            const catalogoExistente = await Catalogo.findOne({ nombreCatalogo: catalogoData.nombreCatalogo });
-            if (!catalogoExistente) {
-                let nuevoCatalogo = new Catalogo(catalogoData);
-                let catalogoGuardado = await nuevoCatalogo.save();
-                resultados.push(catalogoGuardado);
-            } else {
-                console.log(`El catálogo con nombre "${catalogoData.nombreCatalogo}" ya existe.`);
+        
+        for (const catalogoData of catalogos) {
+            const [catalogo, created] = await Catalogo.findOrCreate({
+                where: { nombrecatalogo: catalogoData.nombreCatalogo },
+                defaults: {
+                    descripcioncatalogo: catalogoData.descripcionCatalogo,
+                    disponibilidadcatalogo: catalogoData.disponibilidadCatalogo,
+                    imagen: catalogoData.imagen,
+                    compania_id: catalogoData.compania
+                },
+                transaction
+            });
+
+            if (created && catalogoData.productos) {
+                await catalogo.setProductos(catalogoData.productos, { transaction });
             }
+
+            resultados.push(catalogo);
         }
+
+        await transaction.commit();
         return resultados;
     } catch (err) {
-        console.error('Error al guardar la colección de catálogos:', err);
+        await transaction.rollback();
         throw err;
     }
 }

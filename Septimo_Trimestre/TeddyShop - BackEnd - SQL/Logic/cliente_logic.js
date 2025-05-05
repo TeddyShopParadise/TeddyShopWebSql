@@ -1,97 +1,90 @@
-const Cliente = require('../models/cliente_model');
-const Pedido = require('../models/pedido_model');
-const Factura = require('../models/factura_model');
+// Logic/cliente_logic.js
+
+const db = require('../modelsSQL');
+const Cliente = db.Cliente;
+const Pedido  = db.Pedido;
+const Factura = db.Factura;
 
 function separarNombreYApellido(nombreCompleto) {
-    const [nombre, ...resto] = nombreCompleto.trim().split(' ');
-    const apellido = resto.join(' ') || '';
-    return { nombre, apellido };
+  const [nombre, ...resto] = nombreCompleto.trim().split(' ');
+  const apellido = resto.join(' ') || '';
+  return { nombre, apellido };
 }
 
-// Crear cliente
+// Crear un nuevo cliente
 async function crearCliente(body) {
-    const clienteExistente = await Cliente.findOne({ telefonoCliente: body.telefonoCliente });
-    if (clienteExistente) {
-        throw new Error('Ya existe un cliente con este numero de telefono');
-    }
+  const existente = await Cliente.findOne({ where: { telefonocliente: body.telefonocliente } });
+  if (existente) throw new Error('Ya existe un cliente con este número de teléfono');
 
-    const { nombre, apellido } = separarNombreYApellido(body.nombreCliente);
+  // Separar nombre y apellido
+  const { nombre, apellido } = separarNombreYApellido(body.nombrecliente);
 
-    let cliente = new Cliente({
-        nombreCliente: body.nombreCliente,  
-        nombre,                            
-        apellido,                        
-        telefonoCliente: body.telefonoCliente,
-        pedidos: body.pedidos,
-        facturas: body.facturas
-    });
+  // Crear
+  const cliente = await Cliente.create({
+    nombrecliente: body.nombrecliente,
+    nombre,
+    apellido,
+    telefonocliente: body.telefonocliente
+  });
 
-    return await cliente.save();
+  return buscarClientePorId(cliente.id);
 }
 
-// Actualizar cliente
+// Actualizar un cliente
 async function actualizarCliente(id, body) {
-    const { nombre, apellido } = separarNombreYApellido(body.nombreCliente);
+  const cliente = await Cliente.findByPk(id);
+  if (!cliente) throw new Error(`Cliente con ID ${id} no encontrado`);
 
-    let cliente = await Cliente.findByIdAndUpdate(id, {
-        $set: {
-            nombreCliente: body.nombreCliente,  
-            nombre,                             
-            apellido,                          
-            telefonoCliente: body.telefonoCliente,
-            pedidos: body.pedidos,
-            facturas: body.facturas
-        }
-    }, { new: true });
+  const { nombre, apellido } = separarNombreYApellido(body.nombrecliente);
 
-    return cliente;
+  await cliente.update({
+    nombrecliente:   body.nombrecliente,
+    nombre,
+    apellido,
+    telefonocliente: body.telefonocliente
+  });
+
+  return buscarClientePorId(id);
 }
-
 
 // Listar todos los clientes
 async function listarClientes() {
-    let clientes = await Cliente.find()
-        .populate('pedidos', 'detallePedido')
-        .populate('facturas');
-    return clientes;
+  const clientes = await Cliente.findAll({
+    include: [
+      { model: Pedido,  as: 'pedidos'  },
+      { model: Factura, as: 'facturas' }
+    ],
+    order: [['id', 'DESC']]
+  });
+  return clientes;
 }
 
-// Buscar cliente por ID
+// Buscar un cliente por su ID
 async function buscarClientePorId(id) {
-    try {
-        const cliente = await Cliente.findById(id)
-            .populate('pedidos', 'detallePedido')
-            .populate('facturas');
-        if (!cliente) {
-            throw new Error(`Cliente con ID ${id} no encontrado`);
-        }
-        return cliente;
-    } catch (err) {
-        console.error(`Error al buscar el cliente por ID: ${err.message}`);
-        throw err;
-    }
+  const cliente = await Cliente.findByPk(id, {
+    include: [
+      { model: Pedido,  as: 'pedidos'  },
+      { model: Factura, as: 'facturas' }
+    ]
+  });
+  if (!cliente) throw new Error(`Cliente con ID ${id} no encontrado`);
+  return cliente;
 }
 
-// Eliminar cliente
+// Eliminar un cliente por su ID
 async function eliminarCliente(id) {
-    try {
-        const cliente = await Cliente.findByIdAndDelete(id);
-        if (!cliente) {
-            throw new Error(`Cliente con ID ${id} no encontrado`);
-        }
-        return cliente;
-    } catch (err) {
-        console.error(`Error al eliminar el cliente: ${err.message}`);
-        throw err;
-    }
+  const cliente = await Cliente.findByPk(id);
+  if (!cliente) throw new Error(`Cliente con ID ${id} no encontrado`);
+
+  await cliente.destroy();
+  return cliente;
 }
 
-// Exportar funciones
 module.exports = {
-    crearCliente,
-    actualizarCliente,
-    listarClientes,
-    buscarClientePorId,
-    eliminarCliente,
-    separarNombreYApellido
+  crearCliente,
+  actualizarCliente,
+  listarClientes,
+  buscarClientePorId,
+  eliminarCliente,
+  separarNombreYApellido
 };

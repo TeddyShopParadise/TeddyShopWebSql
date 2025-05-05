@@ -1,74 +1,110 @@
-const Empleado = require('../models/empleado_model');
-const Compania = require('../models/compañia_model'); 
+const { Op } = require('sequelize');
+const db = require('../modelsSQL');
+const Empleado = db.Empleado;
+const Compania = db.Compania;
+const Usuario = db.Usuario; 
 
-// Función asíncrona para crear un nuevo empleado
+
+
+// Crear un nuevo empleado
 async function crearEmpleado(body) {
-    const empleado = new Empleado({
-        dniEmpleado: body.dniEmpleado,
-        telefonoEmpleado: body.telefonoEmpleado,
-        nombreEmpleado: body.nombreEmpleado,
-        compania: body.compania, 
-    });
+  const empleadoExistente = await Empleado.findOne({
+    where: { dniEmpleado: body.dniEmpleado }
+  });
 
-    return await empleado.save();
+  if (empleadoExistente) {
+    throw new Error('Ya existe un empleado con este DNI');
+  }
+
+  // Verificar que la compañía existe
+  if (body.companiaId) {
+    const compania = await Compania.findByPk(body.companiaId);
+    if (!compania) {
+      throw new Error('La compañía especificada no existe');
+    }
+  }
+
+  // Crear el empleado
+  const empleado = await Empleado.create({
+    dniEmpleado: body.dniEmpleado,
+    telefonoEmpleado: body.telefonoEmpleado,
+    nombreEmpleado: body.nombreEmpleado,
+    companiaId: body.companiaId
+  });
+
+  return empleado;
 }
 
-// Función asíncrona para actualizar un empleado
+// Actualizar un empleado
 async function actualizarEmpleado(id, body) {
-    const empleado = await Empleado.findByIdAndUpdate(id, {
-        $set: {
-            dniEmpleado: body.dniEmpleado,
-            telefonoEmpleado: body.telefonoEmpleado,
-            nombreEmpleado: body.nombreEmpleado,
-            compania: body.compania, 
-            usuario: body.usuario,
-        }
-    }, { new: true });
+  const empleado = await Empleado.findByPk(id);
+  if (!empleado) {
+    throw new Error('Empleado no encontrado');
+  }
 
-    return empleado;
+  if (body.companiaId) {
+    const compania = await Compania.findByPk(body.companiaId);
+    if (!compania) {
+      throw new Error('La compañía especificada no existe');
+    }
+  }
+
+  await empleado.update({
+    dniEmpleado: body.dniEmpleado,
+    telefonoEmpleado: body.telefonoEmpleado,
+    nombreEmpleado: body.nombreEmpleado,
+    companiaId: body.companiaId
+  });
+
+  return empleado;
 }
 
-// Función asíncrona para listar todos los empleados
+// Listar todos los empleados
 async function listarEmpleados() {
-    const empleados = await Empleado.find()
-        .populate('compania', 'nombreEmpresa') 
-    return empleados;
+  return await Empleado.findAll({
+    attributes: ['id', 'dniEmpleado', 'telefonoEmpleado', 'nombreEmpleado', 'created_at', 'updated_at'],
+    include: [
+      {
+        model: Compania,
+        attributes: ['id', 'nombreempresa'],
+        as: 'compania'
+      },
+    ],
+    order: [['created_at', 'DESC']]
+  });
 }
 
-// Función asíncrona para buscar un empleado por su ID
+// Buscar un empleado por su ID
 async function buscarEmpleadoPorId(id) {
-    try {
-        const empleado = await Empleado.findById(id)
-            .populate('compania', 'nombreEmpresa')
-        
-        if (!empleado) {
-            throw new Error(`Empleado con ID ${id} no encontrado`);
-        }
-        return empleado;
-    } catch (err) {
-        console.error(`Error al buscar el empleado por ID: ${err.message}`);
-        throw err;
-    }
+  const empleado = await Empleado.findByPk(id, {
+    include: [{
+      model: Compania, 
+      as: 'compania'
+    }]
+  });
+
+  if (!empleado) {
+    throw new Error(`Empleado con ID ${id} no encontrado`);
+  }
+
+  return empleado;
 }
 
-// Función asíncrona para eliminar un empleado por su ID
+// Eliminar un empleado por su ID
 async function eliminarEmpleado(id) {
-    try {
-        const empleado = await Empleado.findByIdAndDelete(id);
-        if (!empleado) {
-            throw new Error(`Empleado con ID ${id} no encontrado`);
-        }
-        return empleado;
-    } catch (err) {
-        console.error(`Error al eliminar el empleado: ${err.message}`);
-        throw err;
-    }
+  const empleado = await Empleado.findByPk(id);
+  if (!empleado) {
+    throw new Error(`Empleado con ID ${id} no encontrado`);
+  }
+
+  await empleado.destroy();
+  return empleado;
 }
 
 module.exports = {
-    crearEmpleado,
-    actualizarEmpleado,
-    listarEmpleados,
-    buscarEmpleadoPorId,
-    eliminarEmpleado
+  crearEmpleado,
+  actualizarEmpleado,
+  listarEmpleados,
+  buscarEmpleadoPorId,
+  eliminarEmpleado
 };

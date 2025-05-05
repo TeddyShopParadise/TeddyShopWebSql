@@ -1,79 +1,122 @@
-const Compañia = require('../models/compañia_model');
-const Catalogo = require('../models/catalogo_model');
-const Empleado = require('../models/empleado_model');
+const { Op } = require('sequelize');
+const db = require('../modelsSQL');
+const Compania = db.Compania; 
+const Catalogo = db.Catalogo;
+const Empleado = db.Empleado;
 
-// Función asíncrona para crear una nueva compañía
-async function crearCompañia(body) {
-    let compañia = new Compañia({
-        NIT: body.NIT,
-        telefonoEmpresa: body.telefonoEmpresa,
-        nombreEmpresa: body.nombreEmpresa,
-        direccionEmpresa: body.direccionEmpresa,
-        catalogos: body.catalogos,
-        empleados: body.empleados
-    });
+// Crear una nueva compañía
+async function crearCompania(body) {
+  const companiaExistente = await Compania.findOne({
+    where: { NIT: body.NIT }
+  });
 
-    return await compañia.save();
+  if (companiaExistente) {
+    throw new Error('Ya existe una compañía con este NIT');
+  }
+
+  // Crear la compañía
+  const compania = await Compania.create({
+    NIT: body.NIT,
+    telefonoEmpresa: body.telefonoEmpresa,
+    nombreEmpresa: body.nombreEmpresa,
+    direccionEmpresa: body.direccionEmpresa
+  });
+
+  if (body.catalogos && body.catalogos.length > 0) {
+    await compania.setCatalogos(body.catalogos);
+  }
+
+  if (body.empleados && body.empleados.length > 0) {
+    await compania.setEmpleados(body.empleados);
+  }
+
+  return compania;
 }
 
-// Función asíncrona para actualizar una compañía
-async function actualizarCompañia(id, body) {
-    let compañia = await Compañia.findByIdAndUpdate(id, {
-        $set: {
-            NIT: body.NIT,
-            telefonoEmpresa: body.telefonoEmpresa,
-            nombreEmpresa: body.nombreEmpresa,
-            direccionEmpresa: body.direccionEmpresa,
-            catalogos: body.catalogos,
-            empleados: body.empleados
-        }
-    }, { new: true });
+// Actualizar una compañía
+async function actualizarCompania(id, body) {
+  const compania = await Compania.findByPk(id);
+  if (!compania) {
+    throw new Error('Compañía no encontrada');
+  }
 
-    return compañia;
+  await compania.update({
+    NIT: body.NIT,
+    telefonoEmpresa: body.telefonoEmpresa,
+    nombreEmpresa: body.nombreEmpresa,
+    direccionEmpresa: body.direccionEmpresa
+  });
+
+  if (body.catalogos) {
+    await compania.setCatalogos(body.catalogos);
+  }
+
+  if (body.empleados) {
+    await compania.setEmpleados(body.empleados);
+  }
+
+  return compania;
 }
 
-// Función asíncrona para listar todas las compañías
-async function listarCompañias() {
-    let compañias = await Compañia.find()
-        .populate('catalogos', 'nombreCatalogo') 
-        .populate('empleados', 'nombreEmpleado dniEmpleado'); 
-    return compañias;
+// Listar todas las compañías
+async function listarCompanias() {
+  return await Compania.findAll({
+    attributes: ['id', 'NIT', 'telefonoEmpresa', 'nombreEmpresa', 'direccionEmpresa', 'created_at', 'updated_at'],
+    include: [
+      {
+        model: Catalogo,
+        attributes: ['id', 'nombreCatalogo'],
+        as: 'catalogos'
+      },
+      {
+        model: Empleado,
+        attributes: ['id', 'nombreempleado', 'dniempleado'],
+        as: 'empleados'
+      }
+    ],
+    order: [['created_at', 'DESC']]
+  });
 }
 
-// Función asíncrona para buscar una compañía por su ID
-async function buscarCompañiaPorId(id) {
-    try {
-        const compañia = await Compañia.findById(id)
-            .populate('catalogos', 'nombreCatalogo') 
-            .populate('empleados', 'nombreEmpleado dniEmpleado'); 
-        if (!compañia) {
-            throw new Error(`Compañía con ID ${id} no encontrada`);
-        }
-        return compañia;
-    } catch (err) {
-        console.error(`Error al buscar la compañía por ID: ${err.message}`);
-        throw err;
-    }
+// Buscar una compañía por su ID
+async function buscarCompaniaPorId(id) {
+  const compania = await Compania.findByPk(id, {
+    include: [
+      {
+        model: Catalogo,
+        attributes: ['id', 'nombreCatalogo'],
+        as: 'catalogos'
+      },
+      {
+        model: Empleado,
+        attributes: ['id', 'nombreempleado', 'dniempleado'],
+        as: 'empleados'
+      }
+    ]
+  });
+
+  if (!compania) {
+    throw new Error(`Compañía con ID ${id} no encontrada`);
+  }
+
+  return compania;
 }
 
-// Función asíncrona para eliminar una compañía por su ID
-async function eliminarCompañia(id) {
-    try {
-        const compañia = await Compañia.findByIdAndDelete(id);
-        if (!compañia) {
-            throw new Error(`Compañía con ID ${id} no encontrada`);
-        }
-        return compañia;
-    } catch (err) {
-        console.error(`Error al eliminar la compañía: ${err.message}`);
-        throw err;
-    }
+// Eliminar una compañía por su ID
+async function eliminarCompania(id) {
+  const compania = await Compania.findByPk(id);
+  if (!compania) {
+    throw new Error(`Compañía con ID ${id} no encontrada`);
+  }
+
+  await compania.destroy();
+  return compania;
 }
 
 module.exports = {
-    crearCompañia,
-    actualizarCompañia,
-    listarCompañias,
-    buscarCompañiaPorId,
-    eliminarCompañia
+  crearCompania,
+  actualizarCompania,
+  listarCompanias,
+  buscarCompaniaPorId,
+  eliminarCompania
 };
