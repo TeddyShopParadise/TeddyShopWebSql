@@ -44,8 +44,8 @@
   export default function Cliente() {
     const [clientes, setClientes] = useState([]);
     const [formData, setFormData] = useState({
-      nombreCliente: '',
-      telefonoCliente: '',
+      nombrecliente: '',
+      telefonocliente: '',
     });
     const [pedidos, setPedidos] = useState([]); 
     const [facturas, setFacturas] = useState([]); 
@@ -90,7 +90,7 @@
 
       const dataToSend = {
         ...formData,
-        telefonoCliente: formData.telefonoCliente.trim(), 
+        telefonocliente: formData.telefonocliente.trim(), 
         pedidos,
         facturas
       };
@@ -106,8 +106,8 @@
       if (response.ok) {
         await listarClientes();
         setFormData({
-          nombreCliente: '',
-          telefonoCliente: ''
+          nombrecliente: '',
+          telefonocliente: ''
         });
         setPedidos([]);
         setFacturas([]);
@@ -131,8 +131,8 @@
     const handleEdit = (cliente) => {
       setSelectedClientId(cliente._id);
       setFormData({
-        nombreCliente: cliente.nombreCliente,
-        telefonoCliente: cliente.telefonoCliente,
+        nombrecliente: cliente.nombrecliente,
+        telefonocliente: cliente.telefonocliente,
       });
       setPedidos(cliente.pedidos || []);
       setFacturas(cliente.facturas || []); 
@@ -193,7 +193,7 @@
     };
   
     const filteredClientes = clientes.filter((cliente) =>
-      cliente.telefonoCliente.toLowerCase().includes(searchTerm.toLowerCase())
+      cliente.telefonocliente.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleSearchChange = (e) => {
@@ -403,8 +403,8 @@
                         },
                       }}
                     >
-                      <TableCell>{cliente.nombreCliente}</TableCell>
-                      <TableCell>{cliente.telefonoCliente}</TableCell>
+                      <TableCell>{cliente.nombrecliente}</TableCell>
+                      <TableCell>{cliente.telefonocliente}</TableCell>
                       <TableCell align="center">
                         <IconButton
                           onClick={() => handleEdit(cliente)}
@@ -477,10 +477,10 @@
                 <DialogContent>
                   <Box sx={{ color: '#666' }}>
                     <Typography sx={{ mb: 1 }}>
-                      <strong style={{color: '#b04e6f'}}>Nombre:</strong> {selectedCliente.nombreCliente}
+                      <strong style={{color: '#b04e6f'}}>Nombre:</strong> {selectedCliente.nombrecliente}
                     </Typography>
                     <Typography sx={{ mb: 1 }}>
-                      <strong style={{color: '#b04e6f'}}>Teléfono:</strong> {selectedCliente.telefonoCliente}
+                      <strong style={{color: '#b04e6f'}}>Teléfono:</strong> {selectedCliente.telefonocliente}
                     </Typography>
                     <Typography sx={{ mb: 1 }}>
                       <strong style={{color: '#b04e6f'}}>Pedidos:</strong> {selectedCliente.pedidos.map(p => p._id).join(", ")}
