@@ -69,7 +69,6 @@ const authorizeAccess = require('../middlewares/authorizeAccess');
  *       500:
  *         description: Error interno del servidor
  */
-
 router.get('/', productoController.listarProductos);
 
 //router.use(authorizeAccess('Administrador', 'Empleado'));
@@ -123,8 +122,7 @@ router.get('/', productoController.listarProductos);
  *       500:
  *         description: Error interno del servidor
  */
-
-router.post('/',upload.single('image'), productoController.crearProducto);
+router.post('/', upload.single('image'), productoController.crearProducto);
 
 /**
  * @swagger
@@ -148,7 +146,6 @@ router.post('/',upload.single('image'), productoController.crearProducto);
  *       500:
  *         description: Error interno del servidor
  */
-
 router.get('/:id', productoController.obtenerProductoPorId);
 
 /**
@@ -207,7 +204,6 @@ router.get('/:id', productoController.obtenerProductoPorId);
  *       404:
  *         description: Producto no encontrado
  */
-
 router.put('/:id', upload.single('image'), productoController.actualizarProducto);
 
 /**
@@ -232,7 +228,6 @@ router.put('/:id', upload.single('image'), productoController.actualizarProducto
  *       500:
  *         description: Error interno del servidor
  */
-
 router.delete('/:id', productoController.eliminarProducto);
 
 /**
@@ -264,6 +259,5 @@ router.delete('/:id', productoController.eliminarProducto);
  *         description: Error interno del servidor
  */
 router.get('/catalogo/:id', productoController.getProductosByCatalogo);
-
 
 module.exports = router;

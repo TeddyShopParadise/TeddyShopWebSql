@@ -37,18 +37,12 @@ const authorizeAccess = require('../middlewares/authorizeAccess');
  *                   _id:
  *                     type: string
  *                     example: "60d2b6e3e6b0f99dbe0c5a79"
- *                   dniCliente:
- *                     type: number
- *                     example: 12345678
- *                   nombreCliente:
+ *                   nombrecliente:
  *                     type: string
  *                     example: "Juan"
- *                   telefonoCliente:
+ *                   telefonocliente:
  *                     type: string
  *                     example: "987654321"
- *                   apellidoCliente:
- *                     type: string
- *                     example: "Pérez"
  *                   pedidos:
  *                     type: array
  *                     items:
@@ -77,18 +71,12 @@ router.get('/', clienteController.listarClientes);
  *           schema:
  *             type: object
  *             properties:
- *               dniCliente:
- *                 type: number
- *                 example: 12345678
- *               nombreCliente:
+ *               nombrecliente:
  *                 type: string
  *                 example: "Juan"
- *               telefonoCliente:
+ *               telefonocliente:
  *                 type: string
  *                 example: "987654321"
- *               apellidoCliente:
- *                 type: string
- *                 example: "Pérez"
  *     responses:
  *       201:
  *         description: Cliente creado exitosamente
@@ -117,18 +105,12 @@ router.post('/', clienteController.crearCliente);
  *           schema:
  *             type: object
  *             properties:
- *               dniCliente:
- *                 type: number
- *                 example: 12345678
- *               nombreCliente:
+ *               nombrecliente:
  *                 type: string
  *                 example: "Juan"
- *               telefonoCliente:
+ *               telefonocliente:
  *                 type: string
  *                 example: "987654321"
- *               apellidoCliente:
- *                 type: string
- *                 example: "Pérez"
  *     responses:
  *       201:
  *         description: Cliente creado exitosamente
@@ -164,18 +146,12 @@ router.get('/:id', clienteController.obtenerClientePorId);
  *           schema:
  *             type: object
  *             properties:
- *               dniCliente:
- *                 type: number
- *                 example: 12345678
- *               nombreCliente:
+ *               nombrecliente:
  *                 type: string
  *                 example: "Juan"
- *               telefonoCliente:
+ *               telefonocliente:
  *                 type: string
  *                 example: "987654321"
- *               apellidoCliente:
- *                 type: string
- *                 example: "Pérez"
  *     responses:
  *       200:
  *         description: Cliente actualizado exitosamente

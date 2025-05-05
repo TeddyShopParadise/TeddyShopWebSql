@@ -52,12 +52,12 @@ const {
  *                   estado:
  *                     type: boolean
  *                     example: true
- *                   empleados:
+ *                   empleado_id:
  *                     type: array
  *                     items:
  *                       type: string
  *                       example: "60d2b6e3e6b0f99dbe0c3a7b"
- *                   roles:
+ *                   rol_id:
  *                     type: array
  *                     items:
  *                       type: string
@@ -85,7 +85,7 @@ router.get('/', listarUsuarios);
  *               email:
  *                 type: string
  *                 example: "usuario@example.com"
- *               contraseña:
+ *               contrasena:
  *                 type: string
  *                 example: "miContraseñaSegura"
  *               username:
@@ -94,12 +94,12 @@ router.get('/', listarUsuarios);
  *               estado:
  *                 type: boolean
  *                 example: true
- *               empleados:
+ *               empleado_id:
  *                  type: array
  *                  items:
  *                   type: string
  *                   example: "60d2b6e3e6b0f99dbe0c3a7b"
- *               roles:
+ *               rol_id:
  *                 type: array
  *                 items:
  *                   type: string
@@ -139,7 +139,7 @@ router.post('/', crearUsuario);
  *               email:
  *                 type: string
  *                 example: "usuario@example.com"
- *               contraseña:
+ *               contrasena:
  *                 type: string
  *                 example: "miContraseñaSegura"
  *               username:
@@ -148,12 +148,12 @@ router.post('/', crearUsuario);
  *               estado:
  *                 type: boolean
  *                 example: true
- *               empleados:
+ *               empleado_id:
  *                  type: array
  *                  items:
  *                   type: string
  *                   example: "60d2b6e3e6b0f99dbe0c3a7b"
- *               roles:
+ *               rol_id:
  *                 type: array
  *                 items:
  *                   type: string

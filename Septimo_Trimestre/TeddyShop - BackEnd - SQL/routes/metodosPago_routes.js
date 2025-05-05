@@ -42,7 +42,7 @@ const authorizeAccess = require('../middlewares/authorizeAccess');
  *                   _id:
  *                     type: string
  *                     example: "60d2b6e3e6b0f99dbe0c5a79"
- *                   nombreMetodoPago:
+ *                   nombremetodopago:
  *                     type: string
  *                     example: "Tarjeta de Crédito"
  *       500:
@@ -68,7 +68,7 @@ router.get('/', listarMetodosPago);
  *           schema:
  *             type: object
  *             properties:
- *               nombreMetodoPago:
+ *               nombremetodopago:
  *                 type: string
  *                 example: "Tarjeta de Crédito"
  *     responses:
@@ -130,7 +130,7 @@ router.get('/:id', obtenerMetodoPagoPorId);
  *           schema:
  *             type: object
  *             properties:
- *               nombreMetodoPago:
+ *               nombremetodopago:
  *                 type: string
  *                 example: "Tarjeta de Crédito"
  *     responses:

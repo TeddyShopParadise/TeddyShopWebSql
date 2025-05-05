@@ -52,7 +52,7 @@ const {
  *                   nombreEmpleado:
  *                     type: string
  *                     example: "Juan Pérez"
- *                   compania:
+ *                   companiaId:
  *                     type: string
  *                     example: "60d2b6e3e6b0f99dbe0c5a7a"
  *       500:
@@ -86,7 +86,7 @@ router.get('/', listarEmpleados);
  *               nombreEmpleado:
  *                 type: string
  *                 example: "Juan Pérez"
- *               compania:
+ *               companiaId:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7a"
  *     responses:
@@ -132,7 +132,7 @@ router.post('/', crearEmpleado);
  *               nombreEmpleado:
  *                 type: string
  *                 example: "Juan Pérez"
- *               compania:
+ *               companiaId:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7a"
  *     responses:

@@ -51,11 +51,6 @@ const {
  *                   nombre:
  *                     type: string
  *                     example: "Administrador"
- *                   usuarios:
- *                     type: array
- *                     items:
- *                       type: string
- *                       example: "60d2b6e3e6b0f99dbe0c5a7b"
  *       500:
  *         description: Error interno del servidor
  */
@@ -84,11 +79,6 @@ router.get('/', listarRoles);
  *               nombre:
  *                 type: string
  *                 example: "Administrador"
- *               usuarios:
- *                 type: array
- *                 items:
- *                   type: string
- *                   example: "60d2b6e3e6b0f99dbe0c5a7b"
  *     responses:
  *       201:
  *         description: Rol creado exitosamente
@@ -155,11 +145,6 @@ router.put('/:id', actualizarRol);
  *               nombre:
  *                 type: string
  *                 example: "Administrador"
- *               usuarios:
- *                 type: array
- *                 items:
- *                   type: string
- *                   example: "60d2b6e3e6b0f99dbe0c5a7b"
  *     responses:
  *       200:
  *         description: Rol actualizado exitosamente

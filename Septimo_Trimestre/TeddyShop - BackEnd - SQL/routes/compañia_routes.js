@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const {
-    listarCompañias,
-    crearCompañia,
-    actualizarCompañia,
-    obtenerCompañiaPorId,
-    eliminarCompañia
+    listarCompanias,
+    crearCompania,
+    actualizarCompania,
+    obtenerCompaniaPorId,
+    eliminarCompania
 } = require('../Controllers/compañia_controller'); // Asegúrate de importar los controladores
 
 const authorizeAccess = require('../middlewares/authorizeAccess');
@@ -67,7 +67,7 @@ const authorizeAccess = require('../middlewares/authorizeAccess');
  */
 
 
-router.get('/', listarCompañias);
+router.get('/', listarCompanias);
 
 //router.use(authorizeAccess('Administrador', 'Empleado'));
 
@@ -109,7 +109,7 @@ router.get('/', listarCompañias);
  */
 
 
-router.post('/', crearCompañia);
+router.post('/', crearCompania);
 
 /**
  * @swagger
@@ -153,7 +153,7 @@ router.post('/', crearCompañia);
  *         description: Compañía no encontrada
  */
 
-router.put('/:id', actualizarCompañia);
+router.put('/:id', actualizarCompania);
 
 /**
  * @swagger
@@ -179,7 +179,7 @@ router.put('/:id', actualizarCompañia);
  */
 
 
-router.get('/:id', obtenerCompañiaPorId);
+router.get('/:id', obtenerCompaniaPorId);
 
 /**
  * @swagger
@@ -204,6 +204,6 @@ router.get('/:id', obtenerCompañiaPorId);
  *         description: Error interno del servidor
  */
 
-router.delete('/:id', eliminarCompañia);
+router.delete('/:id', eliminarCompania);
 
 module.exports = router;
