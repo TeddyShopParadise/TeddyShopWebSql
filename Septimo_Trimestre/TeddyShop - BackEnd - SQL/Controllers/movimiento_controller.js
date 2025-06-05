@@ -1,89 +1,130 @@
-//Controlador para movimiento
-const logic = require('../Logic/movimiento_logic'); 
-const { movimientoSchemaValidation } = require('../Validations/movimiento_validation'); 
+// controllers/movimiento_controller.js
 
-// Controlador para listar todos los movimientos
+const logic = require('../Logic/movimiento_logic');
+const { movimientoSchemaValidation } = require('../Validations/movimiento_validation');
+
+// Listar todos los movimientos
 const listarMovimientos = async (req, res) => {
-    try {
-        const movimientos = await logic.listarMovimientos();
-        res.json(movimientos);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
+  console.log('[Listar Movimientos] Iniciando proceso...');
+  try {
+    const movimientos = await logic.listarMovimientos();
+    if (movimientos.length === 0) {
+      console.log('[Listar Movimientos] No se encontraron movimientos');
+      return res.status(204).send();
     }
+    console.log('[Listar Movimientos] Movimientos encontrados:', movimientos.length);
+    res.json(movimientos);
+  } catch (err) {
+    console.error('[Listar Movimientos] Error en el proceso:', err);
+    res.status(500).json({
+      error: 'Error al listar movimientos',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para crear un nuevo movimiento
+// Crear un nuevo movimiento
 const crearMovimiento = async (req, res) => {
-    const body = req.body;
+  console.log('[Crear Movimiento] Iniciando proceso...');
+  const { error, value } = movimientoSchemaValidation.validate(req.body, { abortEarly: false });
 
-    const { error, value } = movimientoSchemaValidation.validate(body);
+  if (error) {
+    console.error('[Crear Movimiento] Validación fallida:', error.details);
+    return res.status(400).json({
+      error: 'Validación fallida',
+      detalles: error.details.map(d => d.message)
+    });
+  }
 
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-    }
-
-    try {
-        const nuevoMovimiento = await logic.crearMovimiento(value);
-        res.status(201).json(nuevoMovimiento);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+  try {
+    console.log('[Crear Movimiento] Datos enviados a lógica:', value);
+    const nuevoMovimiento = await logic.crearMovimiento(value);
+    console.log('[Crear Movimiento] Movimiento creado con ID:', nuevoMovimiento.id);
+    res.status(201).json(nuevoMovimiento);
+  } catch (err) {
+    console.error('[Crear Movimiento] Error en el proceso:', err);
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para actualizar un movimiento
+// Actualizar un movimiento
 const actualizarMovimiento = async (req, res) => {
-    const { id } = req.params;
-    const body = req.body;
+  const { id } = req.params;
+  console.log('[Actualizar Movimiento] ID:', id);
 
-    const { error, value } = movimientoSchemaValidation.validate(body);
+  const { error, value } = movimientoSchemaValidation.validate(req.body, { abortEarly: false });
+  if (error) {
+    console.error('[Actualizar Movimiento] Validación fallida:', error.details);
+    return res.status(400).json({
+      error: 'Validación fallida',
+      detalles: error.details.map(d => d.message)
+    });
+  }
 
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
+  try {
+    console.log('[Actualizar Movimiento] Datos enviados a lógica:', value);
+    const movimientoActualizado = await logic.actualizarMovimiento(id, value);
+    if (!movimientoActualizado) {
+      console.log('[Actualizar Movimiento] Movimiento no encontrado');
+      return res.status(404).json({ error: 'Movimiento no encontrado' });
     }
-
-    try {
-        const movimientoActualizado = await logic.actualizarMovimiento(id, value);
-        if (!movimientoActualizado) {
-            return res.status(404).json({ error: 'Movimiento no encontrado' });
-        }
-        res.json(movimientoActualizado);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+    console.log('[Actualizar Movimiento] Actualizado ID:', id);
+    res.json(movimientoActualizado);
+  } catch (err) {
+    console.error('[Actualizar Movimiento] Error en el proceso:', err);
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para obtener un movimiento por su ID
+// Obtener un movimiento por ID
 const obtenerMovimientoPorId = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const movimiento = await logic.buscarMovimientoPorId(id);
-        res.json(movimiento);
-    } catch (err) {
-        if (err.message.includes('no encontrado')) {
-            return res.status(404).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Error interno del servidor' });
+  const { id } = req.params;
+  console.log('[Obtener Movimiento] ID:', id);
+  try {
+    const movimiento = await logic.buscarMovimientoPorId(id);
+    res.json(movimiento);
+  } catch (err) {
+    console.error('[Obtener Movimiento] Error en el proceso:', err);
+    if (err.message.includes('no encontrado')) {
+      return res.status(404).json({ error: err.message });
     }
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
 
-// Controlador para eliminar un movimiento por su ID
+// Eliminar un movimiento
 const eliminarMovimiento = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const movimientoEliminado = await logic.eliminarMovimiento(id);
-        res.json(movimientoEliminado);
-    } catch (err) {
-        if (err.message.includes('no encontrado')) {
-            return res.status(404).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Error interno del servidor' });
+  const { id } = req.params;
+  console.log('[Eliminar Movimiento] ID:', id);
+  try {
+    const movimientoEliminado = await logic.eliminarMovimiento(id);
+    console.log('[Eliminar Movimiento] Eliminado ID:', movimientoEliminado.id);
+    res.json(movimientoEliminado);
+  } catch (err) {
+    console.error('[Eliminar Movimiento] Error en el proceso:', err);
+    if (err.message.includes('no encontrado')) {
+      return res.status(404).json({ error: err.message });
     }
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 };
-// Exportar los controladores
+
 module.exports = {
-    listarMovimientos,
-    crearMovimiento,
-    actualizarMovimiento,
-    obtenerMovimientoPorId,
-    eliminarMovimiento
+  listarMovimientos,
+  crearMovimiento,
+  actualizarMovimiento,
+  obtenerMovimientoPorId,
+  eliminarMovimiento
 };

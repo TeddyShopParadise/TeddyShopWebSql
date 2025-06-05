@@ -38,7 +38,7 @@ const crearMetodoPago = async (req, res) => {
 
   try {
     const nuevoMetodo = await logic.crearMetodoPago(value);
-    console.log('[Crear Método de Pago] Creado:', nuevoMetodo._id || nuevoMetodo.id);
+    console.log('[Crear Método de Pago] Creado:', nuevoMetodo.id || nuevoMetodo.id);
     res.status(201).json(nuevoMetodo);
   } catch (err) {
     console.error('[Crear Método de Pago] Error:', err);
@@ -108,7 +108,7 @@ const eliminarMetodoPago = async (req, res) => {
   console.log('[Eliminar Método de Pago] ID:', id);
   try {
     const eliminado = await logic.eliminarMetodoPago(id);
-    console.log('[Eliminar Método de Pago] Eliminado:', eliminado._id || eliminado.id);
+    console.log('[Eliminar Método de Pago] Eliminado:', eliminado.id || eliminado.id);
     res.json(eliminado);
   } catch (err) {
     console.error('[Eliminar Método de Pago] Error:', err);

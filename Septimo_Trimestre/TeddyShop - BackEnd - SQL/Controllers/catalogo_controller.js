@@ -131,7 +131,7 @@ const actualizarCatalogo = async (req, res) => {
         catalogo.descripcionCatalogo = value.descripcionCatalogo;
         catalogo.disponibilidadCatalogo = value.disponibilidadCatalogo;
         catalogo.imagen = value.imagen;
-        catalogo.companiaId = value.compania;
+        catalogo.compania_id = value.compania;
         
         await catalogo.save();
         

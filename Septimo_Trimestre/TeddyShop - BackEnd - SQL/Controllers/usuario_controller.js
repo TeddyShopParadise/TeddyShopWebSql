@@ -6,14 +6,12 @@ const bcrypt = require('bcrypt');
 
 // Listar todos los usuarios
 const listarUsuarios = async (req, res) => {
-  console.log('[Listar Usuarios] Iniciando proceso...');
   try {
     const usuarios = await logic.listarUsuarios();
     if (usuarios.length === 0) {
       console.log('[Listar Usuarios] No se encontraron usuarios');
       return res.status(204).send();
     }
-    console.log('[Listar Usuarios] Usuarios encontrados:', usuarios.length);
     res.json(usuarios);
   } catch (err) {
     console.error('[Listar Usuarios] Error en el proceso:', err);
@@ -26,7 +24,6 @@ const listarUsuarios = async (req, res) => {
 
 // Crear un nuevo usuario
 const crearUsuario = async (req, res) => {
-  console.log('[Crear Usuario] Iniciando proceso...');
   const { error, value } = usuarioSchemaValidation.validate(req.body, { abortEarly: false });
 
   if (error) {
@@ -42,10 +39,12 @@ const crearUsuario = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     value.contrasena = await bcrypt.hash(value.contrasena, salt);
 
-    console.log('[Crear Usuario] Datos enviados a lógica:', value);
+    value.rol_id = Array.isArray(value.rol_id) ? value.rol_id[0] : value.rol_id;
+    value.empleado_id = Array.isArray(value.empleado_id) ? value.empleado_id[0] : value.empleado_id;
+
     const nuevoUsuario = await logic.crearUsuario(value);
 
-    console.log('[Crear Usuario] Usuario creado:', nuevoUsuario.id);
+    console.log('[Crear Usuario] Usuario creado con ID:', nuevoUsuario.id);
     res.status(201).json(nuevoUsuario);
   } catch (err) {
     console.error('[Crear Usuario] Error en el proceso:', err);
@@ -79,7 +78,9 @@ const actualizarUsuario = async (req, res) => {
       value.contrasena = await bcrypt.hash(value.contrasena, salt);
     }
 
-    console.log('[Actualizar Usuario] Datos enviados a lógica:', value);
+    value.rol_id = Array.isArray(value.rol_id) ? value.rol_id[0] : value.rol_id;
+    value.empleado_id = Array.isArray(value.empleado_id) ? value.empleado_id[0] : value.empleado_id;
+
     const usuarioActualizado = await logic.actualizarUsuario(id, value);
 
     if (!usuarioActualizado) {

@@ -1,216 +1,204 @@
-//Controlador para Factura
-const logic = require('../Logic/factura_logic'); 
-const { facturaSchemaValidation } = require('../Validations/factura_validation'); 
-const Pedido = require('../models/pedido_model'); 
-const Factura = require('../models/factura_model');
-const DetalleFactura = require('../models/detalleFactura_model');
+// controllers/factura_controller.js
 
-// Controlador para listar todas las facturas
+const logic = require('../Logic/factura_logic');
+const { facturaSchemaValidation } = require('../Validations/factura_validation');
+const db = require('../modelsSQL');
+const Factura = db.Factura;
+const Pedido = db.Pedido;
+
+// Listar todas las facturas
 const listarFacturas = async (req, res) => {
-    try {
-        const facturas = await logic.listarFacturas();
-        res.json(facturas);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-};
-
-// Controlador para crear una nueva factura
-const crearFactura = async (req, res) => {
-    const body = req.body;
-
-    const { error, value } = facturaSchemaValidation.validate(body);
-
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-    }
-
-    try {
-        const nuevaFactura = await logic.crearFactura(value);
-        res.status(201).json(nuevaFactura);
-    } catch (err) {
-        console.error("Error al crear factura:", err); 
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-};
-
-
-// Controlador para actualizar una factura
-const actualizarFactura = async (req, res) => {
-    const { id } = req.params;
-    const body = req.body;
-
-    const { error, value } = facturaSchemaValidation.validate(body);
-
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-    }
-
-    try {
-        const facturaActualizada = await logic.actualizarFactura(id, value);
-        if (!facturaActualizada) {
-            return res.status(404).json({ error: 'Factura no encontrada' });
-        }
-        res.json(facturaActualizada);
-    } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-};
-
-// Controlador para obtener una factura por su ID
-const obtenerFacturaPorId = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const factura = await logic.buscarFacturaPorId(id);
-        res.json(factura);
-    } catch (err) {
-        if (err.message.includes('no encontrada')) {
-            return res.status(404).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-};
-
-// Controlador para eliminar una factura por su ID
-const eliminarFactura = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const facturaEliminada = await logic.eliminarFactura(id);
-        res.json(facturaEliminada);
-    } catch (err) {
-        if (err.message.includes('no encontrada')) {
-            return res.status(404).json({ error: err.message });
-        }
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-};
-const generarFacturaDesdePedido = async (req, res) => {
+  console.log('[Listar Facturas] Iniciando proceso...');
   try {
-    const { pedidoId } = req.params;
-
-    // 1. Obtener el pedido con todos sus detalles
-    const pedido = await Pedido.findById(pedidoId)
-      .populate({
-        path: 'detallesPedido',
-        populate: {
-          path: 'idProducto'
-        }
-      })
-      .populate('facturas')
-      .populate('cliente');
-
-    if (!pedido) {
-      console.warn('⚠️ Pedido no encontrado');
-      return res.status(404).json({ error: 'Pedido no encontrado' });
+    const facturas = await logic.listarFacturas();
+    if (facturas.length === 0) {
+      console.log('[Listar Facturas] No se encontraron facturas');
+      return res.status(204).send();
     }
-
-    console.log('🔍 Estado del pedido:', pedido.estado);
-
-    // 2. Verificar si ya tiene factura
-    if (pedido.facturas && pedido.facturas.length > 0) {
-      const facturaId = pedido.facturas[0];
-      
-      const facturaExistente = await Factura.findById(facturaId)
-        .populate('pedido')
-        .populate('cliente')
-        .populate({
-          path: 'detallesFactura',
-          populate: {
-            path: 'idProducto',
-            select: 'estiloProducto tamañoProducto disponibilidadProducto'
-          }
-        })
-        .populate('metodoPago');
-        
-      console.log('✅ Factura existente recuperada y populada:', facturaExistente);
-      return res.status(200).json(facturaExistente);
-    }
-  
-      // 3. Crear detallesFactura a partir de detallesPedido
-      const detallesFacturaIds = [];
-      for (const detalle of pedido.detallesPedido) {
-  
-        const nuevoDetalle = new DetalleFactura({
-          idProducto: detalle.idProducto._id,
-          idInventario: detalle.idInventario?._id,
-          cantidadDetalleFactura: detalle.cantidad || 1,
-          precioDetalleFactura: detalle.idInventario?.precioVenta || detalle.precio
-        });
-  
-        const detalleGuardado = await nuevoDetalle.save();
-        detallesFacturaIds.push(detalleGuardado._id);
-      }
-  
-      // 4. Crear factura
-      const nuevaFactura = new Factura({
-        fechaCreacionFactura: new Date().toISOString().split('T')[0],
-        horaCreacionFactura: new Date().toLocaleTimeString('es-MX', { hour12: false }),
-        pedido: pedido._id,
-        cliente: pedido.cliente,
-        detallesFactura: detallesFacturaIds,
-        metodoPago: pedido.metodoPago || null
-      });
-  
-      const facturaGuardada = await nuevaFactura.save();
-  
-      // 5. Marcar el pedido con la factura creada
-      pedido.factura = facturaGuardada._id;
-      await pedido.save();
-  
-      // 6. Recuperar la factura con todos los datos populados
-      const facturaCompletaPopulada = await Factura.findById(facturaGuardada._id)
-        .populate('pedido')
-        .populate('cliente')
-        .populate({
-          path: 'detallesFactura',
-          populate: {
-            path: 'idProducto',
-            select: 'estiloProducto tamañoProducto disponibilidadProducto'
-          }
-        })
-        .populate('metodoPago');
-        
-      res.status(201).json(facturaCompletaPopulada);
-    } catch (err) {
-      console.error('💥 Error al generar factura desde pedido:', err);
-      res.status(500).json({ error: 'Error interno del servidor' });
-    }
-};
-
-
-const buscarFacturaPorPedido = async (req, res) => {
-  try {
-    const { pedidoId } = req.params;
-    const factura = await Factura.findOne({ pedido: pedidoId })
-      .populate('pedido')
-      .populate('cliente')
-      .populate({
-        path: 'detallesFactura',
-        populate: {
-          path: 'idProducto',
-          select: 'estiloProducto tamañoProducto disponibilidadProducto'
-        }
-      })
-      .populate('metodoPago');
-    
-    if (!factura) {
-      return res.status(404).json({ error: 'No se encontró factura para este pedido' });
-    }
-    
-    res.json(factura);
+    console.log('[Listar Facturas] Facturas encontradas:', facturas.length);
+    res.json(facturas);
   } catch (err) {
-    console.error('Error al buscar factura por pedido:', err);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('[Listar Facturas] Error en el proceso:', err);
+    res.status(500).json({
+      error: 'Error al listar facturas',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
-// Exportar los controladores
+// Crear nueva factura
+const crearFactura = async (req, res) => {
+  console.log('[Crear Factura] Iniciando proceso...');
+  const { error, value } = facturaSchemaValidation.validate(req.body, { abortEarly: false });
+
+  if (error) {
+    console.error('[Crear Factura] Validación fallida:', error.details);
+    return res.status(400).json({
+      error: 'Validación fallida',
+      detalles: error.details.map(d => d.message)
+    });
+  }
+
+  // Mapear posibles arrays a valores escalares
+  const body = {
+    pedido_id: value.pedido_id ?? (Array.isArray(value.pedido) ? value.pedido[0] : undefined),
+    cliente_id: value.cliente_id ?? (Array.isArray(value.cliente) ? value.cliente[0] : undefined),
+    metodopago_id: value.metodopago_id ?? (Array.isArray(value.metodoPago) ? value.metodoPago[0] : undefined),
+    detallesFactura: value.detallesFactura
+  };
+
+  try {
+    console.log('[Crear Factura] Datos enviados a lógica:', body);
+    const nuevaFactura = await logic.crearFactura(body);
+    console.log('[Crear Factura] Factura creada con ID:', nuevaFactura.id);
+    res.status(201).json(nuevaFactura);
+  } catch (err) {
+    console.error('[Crear Factura] Error en el proceso:', err);
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Actualizar factura
+const actualizarFactura = async (req, res) => {
+  const { id } = req.params;
+  console.log('[Actualizar Factura] ID:', id);
+  const { error, value } = facturaSchemaValidation.validate(req.body, { abortEarly: false });
+
+  if (error) {
+    console.error('[Actualizar Factura] Validación fallida:', error.details);
+    return res.status(400).json({
+      error: 'Validación fallida',
+      detalles: error.details.map(d => d.message)
+    });
+  }
+
+  // Mapear posibles arrays a valores escalares
+  const body = {
+    pedido_id: value.pedido_id ?? (Array.isArray(value.pedido) ? value.pedido[0] : undefined),
+    cliente_id: value.cliente_id ?? (Array.isArray(value.cliente) ? value.cliente[0] : undefined),
+    metodopago_id: value.metodopago_id ?? (Array.isArray(value.metodoPago) ? value.metodoPago[0] : undefined),
+    detallesFactura: value.detallesFactura,
+    fechaCreacionFactura: value.fechaCreacionFactura,
+    horaCreacionFactura: value.horaCreacionFactura
+  };
+
+  try {
+    console.log('[Actualizar Factura] Datos enviados a lógica:', body);
+    const facturaActualizada = await logic.actualizarFactura(id, body);
+    console.log('[Actualizar Factura] Factura actualizada con ID:', id);
+    res.json(facturaActualizada);
+  } catch (err) {
+    console.error('[Actualizar Factura] Error en el proceso:', err);
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Obtener factura por ID
+const obtenerFacturaPorId = async (req, res) => {
+  const { id } = req.params;
+  console.log('[Obtener Factura] ID:', id);
+  try {
+    const factura = await logic.buscarFacturaPorId(id);
+    res.json(factura);
+  } catch (err) {
+    console.error('[Obtener Factura] Error en el proceso:', err);
+    if (err.message.includes('no encontrada')) {
+      return res.status(404).json({ error: err.message });
+    }
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Eliminar factura
+const eliminarFactura = async (req, res) => {
+  const { id } = req.params;
+  console.log('[Eliminar Factura] ID:', id);
+  try {
+    const facturaEliminada = await logic.eliminarFactura(id);
+    console.log('[Eliminar Factura] Factura eliminada ID:', facturaEliminada.id);
+    res.json(facturaEliminada);
+  } catch (err) {
+    console.error('[Eliminar Factura] Error en el proceso:', err);
+    if (err.message.includes('no encontrada')) {
+      return res.status(404).json({ error: err.message });
+    }
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Generar factura desde pedido
+const generarFacturaDesdePedido = async (req, res) => {
+  const { pedidoId } = req.params;
+  console.log('[Generar Factura] Desde Pedido ID:', pedidoId);
+  try {
+    const pedido = await Pedido.findByPk(pedidoId, {
+      include: ['detallesPedido', 'cliente']
+    });
+    if (!pedido) {
+      console.warn('[Generar Factura] Pedido no encontrado');
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+
+    const body = {
+      pedido_id: pedido.id,
+      cliente_id: pedido.cliente.id,
+      metodopago_id: Array.isArray(req.body.metodopago_id) ? req.body.metodopago_id[0] : req.body.metodopago_id,
+      detallesFactura: req.body.detallesFactura
+    };
+
+    const factura = await logic.crearFactura(body);
+    console.log('[Generar Factura] Factura generada ID:', factura.id);
+    res.status(201).json(factura);
+  } catch (err) {
+    console.error('[Generar Factura] Error en el proceso:', err);
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// Buscar factura por pedido
+const buscarFacturaPorPedido = async (req, res) => {
+  const { pedidoId } = req.params;
+  console.log('[Buscar Factura por Pedido] Pedido ID:', pedidoId);
+  try {
+    const factura = await Factura.findOne({
+      where: { pedido_id: pedidoId },
+      include: ['pedido', 'cliente', 'metodoPago', 'detallesFactura']
+    });
+    if (!factura) {
+      console.warn('[Buscar Factura por Pedido] No se encontró factura');
+      return res.status(404).json({ error: 'No se encontró factura para este pedido' });
+    }
+    res.json(factura);
+  } catch (err) {
+    console.error('[Buscar Factura por Pedido] Error en el proceso:', err);
+    res.status(500).json({
+      error: 'Error interno del servidor',
+      detalle: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
 module.exports = {
-    listarFacturas,
-    crearFactura,
-    actualizarFactura,
-    obtenerFacturaPorId,
-    eliminarFactura,
-    generarFacturaDesdePedido,
-    buscarFacturaPorPedido 
+  listarFacturas,
+  crearFactura,
+  actualizarFactura,
+  obtenerFacturaPorId,
+  eliminarFactura,
+  generarFacturaDesdePedido,
+  buscarFacturaPorPedido
 };
