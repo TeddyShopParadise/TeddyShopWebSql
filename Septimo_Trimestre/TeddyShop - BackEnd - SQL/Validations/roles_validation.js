@@ -10,8 +10,8 @@ const rolesSchemaValidation = Joi.object({
     }),
   nombre: Joi.string()
     .required()
-    .min(1) // Se asegura que el nombre no esté vacío
-    .max(255) // Limita la longitud del nombre
+    .min(1) 
+    .max(255) 
     .messages({
       'string.base': 'El nombre debe ser un texto',
       'any.required': 'El nombre es un campo requerido',

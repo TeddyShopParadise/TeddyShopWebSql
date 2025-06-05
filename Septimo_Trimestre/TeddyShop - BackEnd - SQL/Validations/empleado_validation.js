@@ -23,14 +23,10 @@ const empleadoSchemaValidation = Joi.object({
             'string.base': 'El nombre del empleado debe ser un texto',
             'any.required': 'El nombre del empleado es un campo requerido'
         }),
-        companiaId: Joi.number()
-        .integer()
-        .positive()
-        .optional()
+  compania_id:  Joi.number().integer().required()
         .messages({
-            'number.base': 'El ID de la compañía debe ser un número',
-            'number.integer': 'El ID de la compañía debe ser un número entero',
-            'number.positive': 'El ID de la compañía debe ser un número positivo'
+          'any.required': 'El idProducto es obligatorio',
+          'number.base': 'El idProducto debe ser un número entero'
         }),
     
 });

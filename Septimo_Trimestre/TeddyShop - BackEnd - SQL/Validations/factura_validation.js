@@ -17,34 +17,42 @@ const facturaSchemaValidation = Joi.object({
             'string.pattern.base': 'La hora de creación de la factura debe estar en formato HH:MM:SS (con AM/PM opcional)',
             'any.required': 'La hora de creación de la factura es un campo requerido'
         }),    
-    pedido: Joi.string()
-        .length(24)
-        .hex()
-        .optional()
-        .messages({
-            'string.base': 'El ID del pedido debe ser un ID válido en formato hexadecimal',
-            'string.length': 'El ID del pedido debe tener 24 caracteres',
-            'any.required': 'El pedido es un campo requerido'
-        }),
-    cliente: Joi.string()
-        .length(24)
-        .hex()
-        .messages({
-            'string.length': 'El ID del cliente debe tener 24 caracteres',
-        }),
-    detallesFactura: Joi.array().items(Joi.string().length(24).hex()).optional()
-        .messages({
-            'array.base': 'Los detalles de la factura deben ser un array de IDs válidos',
-            'string.length': 'Cada ID de detalle de factura debe tener 24 caracteres'
-        }),
-    metodoPago: Joi.string()
-        .length(24)
-        .hex()
-        .optional()
-        .messages({
-            'string.base': 'El ID del método de pago debe ser un ID válido en formato hexadecimal',
-            'string.length': 'El ID del método de pago debe tener 24 caracteres'
-        }),
+    pedido: Joi.array()
+    .items(Joi.number().integer().min(1))
+    .optional()
+    .messages({
+        'array.base': 'Los pedido deben ser un arreglo',
+        'number.base': 'El ID del pedido debe ser un número',
+        'number.integer': 'El ID debe ser un número entero',
+        'number.min': 'El ID debe ser mayor a 0'
+    }),
+    cliente: Joi.array()
+    .items(Joi.number().integer().min(1))
+    .optional()
+    .messages({
+        'array.base': 'Los CLIENTES deben ser un arreglo',
+        'number.base': 'El ID del CLIENTES debe ser un número',
+        'number.integer': 'El ID debe ser un número entero',
+        'number.min': 'El ID debe ser mayor a 0'
+    }),
+    detallesFactura:Joi.array()
+    .items(Joi.number().integer().min(1))
+    .optional()
+    .messages({
+        'array.base': 'Los detallesFactura deben ser un arreglo',
+        'number.base': 'El ID del detallesFactura debe ser un número',
+        'number.integer': 'El ID debe ser un número entero',
+        'number.min': 'El ID debe ser mayor a 0'
+    }),
+    metodoPago:Joi.array()
+    .items(Joi.number().integer().min(1))
+    .optional()
+    .messages({
+        'array.base': 'Los metodoPago deben ser un arreglo',
+        'number.base': 'El ID del metodoPago debe ser un número',
+        'number.integer': 'El ID debe ser un número entero',
+        'number.min': 'El ID debe ser mayor a 0'
+    }),
 });
 
 // Exportar la validación

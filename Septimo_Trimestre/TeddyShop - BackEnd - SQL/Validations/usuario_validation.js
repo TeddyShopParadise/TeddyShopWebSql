@@ -17,12 +17,12 @@ const usuarioSchemaValidation = Joi.object({
         .required()
         .pattern(/^[\x20-\x7EñÑáéíóúÁÉÍÓÚüÜ]*$/)
         .messages({
-            'string.base': 'La contraseña debe ser un texto',
-            'string.empty': 'La contraseña no puede estar vacía',
-            'string.min': 'La contraseña debe tener al menos 8 caracteres',
-            'string.max': 'La contraseña no debe exceder los 100 caracteres',
-            'string.pattern.base': 'La contraseña puede contener letras, números y símbolos permitidos (@#-_$%^&+=!?)',
-            'any.required': 'La contraseña es un campo requerido'
+            'string.base': 'La contrasena debe ser un texto',
+            'string.empty': 'La contrasena no puede estar vacía',
+            'string.min': 'La contrasena debe tener al menos 8 caracteres',
+            'string.max': 'La contrasena no debe exceder los 100 caracteres',
+            'string.pattern.base': 'La contrasena puede contener letras, números y símbolos permitidos (@#-_$%^&+=!?)',
+            'any.required': 'La contrasena es un campo requerido'
         }),
     username: Joi.string()
         .min(3)

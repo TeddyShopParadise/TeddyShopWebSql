@@ -17,7 +17,7 @@ const productoSchemaValidation = Joi.object({
             'number.min': 'La disponibilidad no puede ser menor a 0',
             'any.required': 'La disponibilidad es un campo requerido'
         }),
-    tamañoProducto: Joi.string()
+    tamanoproducto: Joi.string()
         .required()
         .messages({
             'string.base': 'El tamaño del producto debe ser un texto',

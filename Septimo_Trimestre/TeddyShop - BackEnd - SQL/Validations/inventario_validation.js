@@ -57,29 +57,50 @@ const inventariosSchemaValidation = Joi.object({
             'any.required': 'El precio de compra es requerido'
         }),
 
-    idProducto: Joi.string()
-        .length(24)
-        .hex()
-        .required()
-        .messages({
-            'string.length': 'El ID del producto debe tener 24 caracteres',
-            'string.hex': 'El ID del producto debe ser hexadecimal',
-            'any.required': 'El ID del producto es requerido'
-        }),
+        idProducto: Joi.alternatives()
+        .try(
+          Joi.number().integer().positive().messages({
+            'number.base': 'El ID de producto debe ser un número',
+            'number.integer': 'El ID de producto debe ser un número entero',
+            'number.positive': 'El ID de producto debe ser un número positivo'
+          }),
+          Joi.array()
+            .items(
+              Joi.number().integer().positive().messages({
+                'number.base': 'El ID de producto debe ser un número',
+                'number.integer': 'El ID de producto debe ser un número entero',
+                'number.positive': 'El ID de producto debe ser un número positivo'
+              })
+            )
+            .optional()
+        )
+        .optional(),
+  
 
     // Los campos opcionales permanecen igual
-    idDevolucion: Joi.string()
-        .length(24)
-        .hex()
-        .optional(),
+    idDevolucion: Joi.array()
+    .items(Joi.string().length(24).hex())
+    .optional()
+    .messages({
+        'string.base': 'El ID de la factura debe ser un ID válido',
+        'string.length': 'El ID de la factura debe tener 24 caracteres'
+    }),
 
     detalleFacturas: Joi.array()
-        .items(Joi.string().length(24).hex())
-        .optional(),
+    .items(Joi.string().length(24).hex())
+    .optional()
+    .messages({
+        'string.base': 'El ID de la factura debe ser un ID válido',
+        'string.length': 'El ID de la factura debe tener 24 caracteres'
+    }),
 
     movimientos: Joi.array()
-        .items(Joi.string().length(24).hex())
-        .optional()
+    .items(Joi.string().length(24).hex())
+    .optional()
+    .messages({
+        'string.base': 'El ID de la factura debe ser un ID válido',
+        'string.length': 'El ID de la factura debe tener 24 caracteres'
+    }),
 }).options({
     abortEarly: false
 });

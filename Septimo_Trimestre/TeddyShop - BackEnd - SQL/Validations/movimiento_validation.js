@@ -24,15 +24,11 @@ const movimientoSchemaValidation = Joi.object({
             'number.integer': 'La cantidad vendida debe ser un número entero',
             'any.required': 'La cantidad vendida es un campo requerido'
         }),
-    inventario: Joi.string()
-        .length(24)
-        .hex()
-        .required()
-        .messages({
-            'string.base': 'El ID del inventario debe ser un ID válido',
-            'string.length': 'El ID del inventario debe tener 24 caracteres',
-            'any.required': 'El ID del inventario es un campo requerido'
-        })
+    inventario_id: Joi.number().integer().required()
+    .messages({
+      'any.required': 'El idProducto es obligatorio',
+      'number.base': 'El idProducto debe ser un número entero'
+    }),
 });
 
 // Exportar la validación
