@@ -71,7 +71,7 @@ const useApiRequest = () => {
           title: success.title || 'Éxito',
           text: success.text || '',
           confirmButtonColor: '#28a745',
-          timer: 2000,
+          timer: 4000,
           timerProgressBar: true,
           showConfirmButton: false,
         });
