@@ -14,7 +14,7 @@ async function crearProducto(body) {
   const producto = await Producto.create({
     estiloProducto: body.estiloProducto,
     disponibilidadProducto: body.disponibilidadProducto,
-    tamañoProducto: body.tamañoProducto,
+    tamanoproducto: body.tamanoproducto,
     imagen: body.imagen,
     historial_precio_id: body.historialPrecios?.[0] || null 
   });
@@ -38,7 +38,7 @@ async function actualizarProducto(id, body) {
   await producto.update({
     estiloProducto: body.estiloProducto,
     disponibilidadProducto: body.disponibilidadProducto,
-    tamañoProducto: body.tamañoProducto,
+    tamanoproducto: body.tamanoproducto,
     imagen: body.imagen,
     historial_precio_id: body.historialPrecios?.[0] || null 
   });

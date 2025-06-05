@@ -17,8 +17,8 @@ async function crearEmpleado(body) {
   }
 
   // Verificar que la compañía existe
-  if (body.companiaId) {
-    const compania = await Compania.findByPk(body.companiaId);
+  if (body.compania_id) {
+    const compania = await Compania.findByPk(body.compania_id);
     if (!compania) {
       throw new Error('La compañía especificada no existe');
     }
@@ -29,7 +29,7 @@ async function crearEmpleado(body) {
     dniEmpleado: body.dniEmpleado,
     telefonoEmpleado: body.telefonoEmpleado,
     nombreEmpleado: body.nombreEmpleado,
-    companiaId: body.companiaId
+    compania_id: body.compania_id
   });
 
   return empleado;
@@ -42,8 +42,8 @@ async function actualizarEmpleado(id, body) {
     throw new Error('Empleado no encontrado');
   }
 
-  if (body.companiaId) {
-    const compania = await Compania.findByPk(body.companiaId);
+  if (body.compania_id) {
+    const compania = await Compania.findByPk(body.compania_id);
     if (!compania) {
       throw new Error('La compañía especificada no existe');
     }
@@ -53,7 +53,7 @@ async function actualizarEmpleado(id, body) {
     dniEmpleado: body.dniEmpleado,
     telefonoEmpleado: body.telefonoEmpleado,
     nombreEmpleado: body.nombreEmpleado,
-    companiaId: body.companiaId
+    compania_id: body.compania_id
   });
 
   return empleado;
@@ -66,8 +66,8 @@ async function listarEmpleados() {
     include: [
       {
         model: Compania,
-        attributes: ['id', 'nombreempresa'],
-        as: 'compania'
+        attributes: ['nombreempresa'],
+        as: 'companias'
       },
     ],
     order: [['created_at', 'DESC']]
@@ -79,7 +79,8 @@ async function buscarEmpleadoPorId(id) {
   const empleado = await Empleado.findByPk(id, {
     include: [{
       model: Compania, 
-      as: 'compania'
+      attributes: [ 'nombreempresa'],
+      as: 'companias'
     }]
   });
 

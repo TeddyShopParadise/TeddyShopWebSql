@@ -12,7 +12,7 @@ async function crearUsuario(body) {
 
   const usuario = await Usuario.create({
     email: body.email,
-    contrasena: body.contrasena,
+    contrasena: body.contrasena,  
     username: body.username,
     estado: body.estado,
     empleado_id: body.empleado_id || null,
@@ -27,15 +27,19 @@ async function actualizarUsuario(id, body) {
   const usuario = await Usuario.findByPk(id);
   if (!usuario) throw new Error('Usuario no encontrado');
 
-  await usuario.update({
+  const updateData = {
     email: body.email,
-    contrasena: body.contrasena,
     username: body.username,
     estado: body.estado,
     empleado_id: body.empleado_id || null,
     rol_id: body.rol_id || null
-  });
+  };
 
+  if (body.contrasena) {
+    updateData.contrasena = body.contrasena; 
+  }
+
+  await usuario.update(updateData);
   return buscarUsuarioPorId(id);
 }
 
@@ -43,7 +47,7 @@ async function actualizarUsuario(id, body) {
 async function listarUsuarios() {
   const usuarios = await Usuario.findAll({
     include: [
-      { model: Empleado, as: 'empleado', attributes: ['nombreEmpleado'] },
+      { model: Empleado, as: 'empleado', attributes: ['nombreempleado'] },
       { model: Roles,    as: 'rol',      attributes: ['nombre'] }
     ],
     order: [['id', 'DESC']]
@@ -55,7 +59,7 @@ async function listarUsuarios() {
 async function buscarUsuarioPorId(id) {
   const usuario = await Usuario.findByPk(id, {
     include: [
-      { model: Empleado, as: 'empleado', attributes: ['nombreEmpleado'] },
+      { model: Empleado, as: 'empleado', attributes: ['nombreempleado'] },
       { model: Roles,    as: 'rol',      attributes: ['nombre'] }
     ]
   });

@@ -1,122 +1,104 @@
-const Movimiento = require('../models/movimiento_model'); 
-const Inventario = require ('../models/inventario_model'); 
+const db = require('../modelsSQL');
+const { Op, Sequelize } = require('sequelize');
 
-// Función asíncrona para crear un nuevo movimiento
+const Movimiento = db.Movimiento;
+const Inventario = db.Inventario;
+
+// Crear nuevo movimiento
 async function crearMovimiento(body) {
-    const movimiento = new Movimiento({
-        fecha: body.fecha,
-        cantidadIngreso: body.cantidadIngreso,
-        cantidadVendida: body.cantidadVendida,
-        inventario: body.inventario // Se espera un ObjectId de Inventario
-    });
+  // Usar transacción para asegurar consistencia
+  return await db.sequelize.transaction(async (t) => {
+    // Crear registro de movimiento
+    const movimiento = await Movimiento.create({
+      fecha: body.fecha,
+      cantidadIngreso: body.cantidadIngreso,
+      cantidadVendida: body.cantidadVendida,
+      inventario_id: body.inventario_id
+    }, { transaction: t });
 
-    const movimientoGuardado = await movimiento.save();
-
-    // Actualizar stock en el inventario
-    const inventario = await Inventario.findById(body.inventario);
+    // Actualizar stock en inventario
+    const inventario = await Inventario.findByPk(body.inventario_id, { transaction: t });
     if (!inventario) {
-        throw new Error('Inventario no encontrado para el movimiento');
+      throw new Error('Inventario no encontrado para el movimiento');
     }
 
-    inventario.stock += body.cantidadIngreso;
-    inventario.stock -= body.cantidadVendida;
-
-    // Guardar el movimiento en el array de movimientos del inventario
-    inventario.movimientos.push(movimientoGuardado._id);
-
-    await inventario.save();
-
-    return movimientoGuardado;
-}
-
-// Función asíncrona para actualizar un movimiento
-async function actualizarMovimiento(id, body) {
-    const movimientoAnterior = await Movimiento.findById(id);
-    if (!movimientoAnterior) {
-        throw new Error(`Movimiento con ID ${id} no encontrado`);
-    }
-
-    const inventario = await Inventario.findById(movimientoAnterior.inventario);
-    if (!inventario) {
-        throw new Error('Inventario no encontrado para el movimiento');
-    }
-
-    // Revertir el efecto anterior del movimiento
-    inventario.stock -= movimientoAnterior.cantidadIngreso;
-    inventario.stock += movimientoAnterior.cantidadVendida;
-
-    // Aplicar el nuevo efecto del movimiento actualizado
-    inventario.stock += body.cantidadIngreso;
-    inventario.stock -= body.cantidadVendida;
-
-    await inventario.save();
-
-    const movimiento = await Movimiento.findByIdAndUpdate(id, {
-        $set: {
-            fecha: body.fecha,
-            cantidadIngreso: body.cantidadIngreso,
-            cantidadVendida: body.cantidadVendida,
-            inventario: body.inventario // Se espera un ObjectId de Inventario
-        }
-    }, { new: true });
+    const nuevoStock = inventario.stock + body.cantidadIngreso - body.cantidadVendida;
+    await inventario.update({ stock: nuevoStock }, { transaction: t });
 
     return movimiento;
+  });
 }
 
-// Función asíncrona para listar todos los movimientos
+// Actualizar un movimiento existente
+async function actualizarMovimiento(id, body) {
+  return await db.sequelize.transaction(async (t) => {
+    const movimientoAnterior = await Movimiento.findByPk(id, { transaction: t });
+    if (!movimientoAnterior) {
+      throw new Error(`Movimiento con ID ${id} no encontrado`);
+    }
+
+    const inventario = await Inventario.findByPk(movimientoAnterior.inventario_id, { transaction: t });
+    if (!inventario) {
+      throw new Error('Inventario no encontrado para revertir movimiento');
+    }
+
+    // Revertir efecto previo
+    let stockRevertido = inventario.stock - movimientoAnterior.cantidadIngreso + movimientoAnterior.cantidadVendida;
+
+    // Aplicar nuevo efecto
+    const stockActualizado = stockRevertido + body.cantidadIngreso - body.cantidadVendida;
+    await inventario.update({ stock: stockActualizado }, { transaction: t });
+
+    // Actualizar movimiento
+    await movimientoAnterior.update({
+      fecha: body.fecha,
+      cantidadIngreso: body.cantidadIngreso,
+      cantidadVendida: body.cantidadVendida,
+      inventario_id: body.inventario_id
+    }, { transaction: t });
+
+    return movimientoAnterior;
+  });
+}
+
+// Listar todos los movimientos con su inventario asociado
 async function listarMovimientos() {
-    const movimientos = await Movimiento.find()
-        .populate('inventario'); 
-    return movimientos;
+  return await Movimiento.findAll({
+    include: [{ model: Inventario, as: 'inventario' }],
+    order: [['fecha', 'DESC']]
+  });
 }
 
-// Función asíncrona para buscar un movimiento por su ID
+// Buscar movimiento por ID
 async function buscarMovimientoPorId(id) {
-    try {
-        const movimiento = await Movimiento.findById(id)
-            .populate('inventario'); 
-
-        if (!movimiento) {
-            throw new Error(`Movimiento con ID ${id} no encontrado`);
-        }
-        return movimiento;
-    } catch (err) {
-        console.error(`Error al buscar el movimiento por ID: ${err.message}`);
-        throw err;
-    }
+  const movimiento = await Movimiento.findByPk(id, {
+    include: [{ model: Inventario, as: 'inventario' }]
+  });
+  if (!movimiento) throw new Error(`Movimiento con ID ${id} no encontrado`);
+  return movimiento;
 }
 
-// Función asíncrona para eliminar un movimiento por su ID
+// Eliminar movimiento y ajustar stock
 async function eliminarMovimiento(id) {
-    try {
-        const movimiento = await Movimiento.findByIdAndDelete(id);
-        if (!movimiento) {
-            throw new Error(`Movimiento con ID ${id} no encontrado`);
-        }
+  return await db.sequelize.transaction(async (t) => {
+    const movimiento = await Movimiento.findByPk(id, { transaction: t });
+    if (!movimiento) throw new Error(`Movimiento con ID ${id} no encontrado`);
 
-        // Ajustar el stock del inventario
-        const inventario = await Inventario.findById(movimiento.inventario);
-        if (inventario) {
-            inventario.stock -= movimiento.cantidadIngreso;
-            inventario.stock += movimiento.cantidadVendida;
-
-            // Eliminar referencia al movimiento
-            inventario.movimientos = inventario.movimientos.filter(movId => movId.toString() !== id);
-
-            await inventario.save();
-        }
-
-        return movimiento;
-    } catch (err) {
-        console.error(`Error al eliminar el movimiento: ${err.message}`);
-        throw err;
+    const inventario = await Inventario.findByPk(movimiento.inventario_id, { transaction: t });
+    if (inventario) {
+      const stockAjustado = inventario.stock - movimiento.cantidadIngreso + movimiento.cantidadVendida;
+      await inventario.update({ stock: stockAjustado }, { transaction: t });
     }
+
+    await movimiento.destroy({ transaction: t });
+    return movimiento;
+  });
 }
 
 module.exports = {
-    crearMovimiento,
-    actualizarMovimiento,
-    listarMovimientos,
-    buscarMovimientoPorId,
-    eliminarMovimiento
+  crearMovimiento,
+  actualizarMovimiento,
+  listarMovimientos,
+  buscarMovimientoPorId,
+  eliminarMovimiento
 };

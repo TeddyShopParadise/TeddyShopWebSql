@@ -1,128 +1,148 @@
-const Factura = require('../models/factura_model');
-const DetalleFactura = require('../models/detalleFactura_model');
-const Cliente = require('../models/cliente_model');
-const Pedido = require('../models/pedido_model');
-const MetodoPago = require('../models/metodoPago_model');
+const db = require('../modelsSQL');
+const { Op } = require('sequelize');
+
+const Factura = db.Factura;
+const DetalleFactura = db.DetalleFactura;
+const Cliente = db.Cliente;
+const Pedido = db.Pedido;
+const MetodoPago = db.MetodoPago;
 const { agregarFacturaAPedido } = require('./pedido_logic');
 
 // Crear factura
 async function crearFactura(body) {
   // Verificar si el pedido ya tiene una factura asociada
-  const facturaExistente = await Factura.findOne({ pedido: body.pedido });
-  if (facturaExistente) {
-    // Si ya existe una factura, no la volvemos a crear, sino que la devolvemos
-    return facturaExistente; // Retorna la factura existente
-  }
+  const existente = await Factura.findOne({ where: { pedido_id: body.pedido_id } });
+  if (existente) return buscarFacturaPorId(existente.id);
 
-  // Si no existe una factura, procedemos a crearla
-  const factura = new Factura({
-    fechaCreacionFactura: body.fechaCreacionFactura,
-    horaCreacionFactura: body.horaCreacionFactura,
-    pedido: body.pedido,
-    cliente: body.cliente,
-    detallesFactura: body.detallesFactura || [],
-    metodoPago: body.metodoPago
+  // Crear cabecera de factura
+  const ahora = new Date();
+  const factura = await Factura.create({
+    pedido_id: body.pedido_id,
+    cliente_id: body.cliente_id,
+    metodopago_id: body.metodopago_id,
+    fechaCreacionFactura: ahora.toISOString().split('T')[0],
+    horaCreacionFactura: ahora.toTimeString().split(' ')[0]
   });
 
-  const facturaGuardada = await factura.save();
-  await agregarFacturaAPedido(facturaGuardada.pedido, facturaGuardada._id);
+  // Crear detalles de factura si llegan
+  if (Array.isArray(body.detallesFactura) && body.detallesFactura.length > 0) {
+    await Promise.all(
+      body.detallesFactura.map(async det => {
+        return await DetalleFactura.create({
+          idfactura_id: idfactura.id,
+          idproducto_id: det.idproducto_id,
+          idinventario_id: det.idinventario_id,
+          cantidad: det.cantidad,
+          precioVenta: det.precioVenta,
+          precioCompra: det.precioCompra
+        });
+      })
+    );
+  }
 
-  return facturaGuardada;
+  // Asociar factura al pedido
+  await agregarFacturaAPedido(body.pedido_id, factura.id);
+
+  return buscarFacturaPorId(factura.id);
 }
+
 // Actualizar factura
 async function actualizarFactura(id, body) {
-    const facturaOriginal = await Factura.findById(id);
-    if (!facturaOriginal) throw new Error(`Factura con ID ${id} no encontrada`);
+  const factura = await Factura.findByPk(id);
+  if (!factura) throw new Error(`Factura con ID ${id} no encontrada`);
 
-    if (facturaOriginal.pedido.toString() !== body.pedido) {
-        const facturaExistente = await Factura.findOne({ pedido: body.pedido });
-        if (facturaExistente) {
-            throw new Error('El nuevo pedido ya tiene una factura generada.');
-        }
-    }
+  // Si cambia pedido, validar no duplicar
+  if (body.pedido_id && factura.pedido_id !== body.pedido_id) {
+    const ya = await Factura.findOne({ where: { pedido_id: body.pedido_id } });
+    if (ya) throw new Error('El nuevo pedido ya tiene una factura generada.');
+  }
 
-    const factura = await Factura.findByIdAndUpdate(id, {
-        $set: {
-            fechaCreacionFactura: body.fechaCreacionFactura,
-            horaCreacionFactura: body.horaCreacionFactura,
-            pedido: body.pedido,
-            cliente: body.cliente,
-            detallesFactura: body.detallesFactura,
-            metodoPago: body.metodoPago
-        }
-    }, { new: true });
+  // Actualizar campos
+  const ahora = new Date();
+  await factura.update({
+    pedido_id: body.pedido_id,
+    cliente_id: body.cliente_id,
+    metodopago_id: body.metodopago_id,
+    fechaCreacionFactura: body.fechaCreacionFactura || ahora.toISOString().split('T')[0],
+    horaCreacionFactura: body.horaCreacionFactura || ahora.toTimeString().split(' ')[0]
+  });
 
-    return factura;
+  // Reemplazar detalles si vienen
+  if (Array.isArray(body.detallesFactura)) {
+    // borrar existentes
+    await DetalleFactura.destroy({ where: { idfactura_id: id } });
+    // crear nuevos
+    await Promise.all(
+      body.detallesFactura.map(det =>
+        DetalleFactura.create({
+          factura_id: id,
+          idproducto_id: det.idproducto_id,
+          idinventario_id: det.idinventario_id,
+          cantidad: det.cantidad,
+          precioVenta: det.precioVenta,
+          precioCompra: det.precioCompra
+        })
+      )
+    );
+  }
+
+  return buscarFacturaPorId(id);
 }
 
-// Listar facturas con populate + lean() para obtener objetos puros de JS
+// Listar facturas
 async function listarFacturas() {
-    try {
-      const facturas = await Factura.find()
-        .populate('pedido', 'numPedido')
-        .populate('cliente', 'nombrecliente')
-        .populate({
-          path: 'detallesFactura',
-          populate: [
-            { path: 'idProducto', select: 'estiloProducto disponibilidadProducto' },
-            { path: 'idInventario', select: 'stock precioVenta precioCompra' }
-          ]
-        })
-        .populate('metodoPago', 'nombreMetodoPago')
-        .lean();
-  
-      // Imprime TODO el objeto con identación
-      console.log('Facturas con detalles completos:\n', JSON.stringify(facturas, null, 2));
-      return facturas;
-    } catch (err) {
-      console.error("Error al listar facturas:", err.message);
-      throw new Error("Error al obtener facturas");
-    }
-  }
-  
+  const facturas = await Factura.findAll({
+    include: [
+      { model: Pedido, as: 'pedido', attributes: ['id', 'nombreComprador'] },
+      { model: Cliente, as: 'cliente', attributes: ['nombrecliente', 'telefonocliente'] },
+      { model: MetodoPago, as: 'metodoPago', attributes: ['nombremetodopago'] },
+      {
+        model: DetalleFactura,
+        as: 'detallesFactura',
+        include: [
+          { model: db.Producto, as: 'producto', attributes: ['estiloProducto', 'disponibilidadProducto'] },
+          { model: db.Inventario, as: 'inventario', attributes: ['stock', 'precioVenta', 'precioCompra'] }
+        ]
+      }
+    ],
+    order: [['id', 'DESC']]
+  });
+  return facturas;
+}
 
-// Buscar factura por ID con populate profundo
+// Buscar factura por ID
 async function buscarFacturaPorId(id) {
-    try {
-      const factura = await Factura.findById(id)
-        .populate('pedido', 'numPedido')
-        .populate('cliente', 'nombrecliente')
-        .populate({
-          path: 'detallesFactura',
-          populate: [
-            { path: 'idProducto', select: 'estiloProducto disponibilidadProducto' },
-            { path: 'idInventario', select: 'stock precioVenta precioCompra' }
-          ]
-        })
-        .populate('metodoPago', 'nombreMetodoPago')
-        .lean();
-  
-      console.log('Factura completa:\n', JSON.stringify(factura, null, 2));
-      return factura;
-    } catch (err) {
-      console.error(`Error al buscar la factura por ID: ${err.message}`);
-      throw err;
-    }
-  }
-  
+  const factura = await Factura.findByPk(id, {
+    include: [
+      { model: Pedido, as: 'pedido', attributes: ['id', 'nombreComprador'] },
+      { model: Cliente, as: 'cliente', attributes: ['nombrecliente', 'telefonocliente'] },
+      { model: MetodoPago, as: 'metodoPago', attributes: ['nombremetodopago'] },
+      {
+        model: DetalleFactura,
+        as: 'detallesFactura',
+        include: [
+          { model: db.Producto, as: 'producto', attributes: ['id','estiloProducto', 'disponibilidadProducto'] },
+          { model: db.Inventario, as: 'inventario', attributes: ['id','stock', 'precioVenta', 'precioCompra'] }
+        ]
+      }
+    ]
+  });
+  if (!factura) throw new Error(`Factura con ID ${id} no encontrada`);
+  return factura;
+}
+
 // Eliminar factura
 async function eliminarFactura(id) {
-    try {
-        const factura = await Factura.findByIdAndDelete(id);
-        if (!factura) {
-            throw new Error(`Factura con ID ${id} no encontrada`);
-        }
-        return factura;
-    } catch (err) {
-        console.error(`Error al eliminar la factura: ${err.message}`);
-        throw err;
-    }
+  const factura = await Factura.findByPk(id);
+  if (!factura) throw new Error(`Factura con ID ${id} no encontrada`);
+  await factura.destroy();
+  return factura;
 }
 
 module.exports = {
-    crearFactura,
-    actualizarFactura,
-    listarFacturas,
-    buscarFacturaPorId,
-    eliminarFactura
+  crearFactura,
+  actualizarFactura,
+  listarFacturas,
+  buscarFacturaPorId,
+  eliminarFactura
 };

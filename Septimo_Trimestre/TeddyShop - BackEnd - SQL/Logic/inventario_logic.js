@@ -1,148 +1,119 @@
-const Inventario = require('../models/inventario_model');
+const db = require('../modelsSQL');
+const { Op } = require('sequelize');
 
-// Función asíncrona para crear un inventario
-const Movimiento = require('../models/movimiento_model');
+const Inventario = db.Inventario;
+const Movimiento  = db.Movimiento;
+const sequelize   = db.sequelize;
 
+// Crear un nuevo inventario y registrar movimiento inicial
 async function crearInventario(body) {
-    // Validar que los precios sean positivos
-    if (body.precioVenta <= 0 || body.precioCompra <= 0) {
-        throw new Error('Los precios deben ser valores positivos');
-    }
+  // Validaciones de negocio
+  if (body.precioVenta <= 0 || body.precioCompra <= 0) {
+    throw new Error('Los precios deben ser valores positivos');
+  }
+  if (body.precioVenta <= body.precioCompra) {
+    throw new Error('El precio de venta debe ser mayor al precio de compra');
+  }
+  if (body.stockMinimo > body.stockMaximo) {
+    throw new Error('El stock mínimo no puede ser mayor al stock máximo');
+  }
 
-    // Validar que precioVenta > precioCompra
-    if (body.precioVenta <= body.precioCompra) {
-        throw new Error('El precio de venta debe ser mayor al precio de compra');
-    }
+  const t = await sequelize.transaction();
+  try {
+    // Crear inventario
+    const inventario = await Inventario.create({
+      stockMinimo:   body.stockMinimo,
+      precioVenta:   body.precioVenta,
+      precioCompra:  body.precioCompra,
+      stock:         body.stock,
+      stockMaximo:   body.stockMaximo,
+      idproducto_id: body.idProducto,
+      iddevolucion_id: body.idDevolucion || null
+    }, { transaction: t });
 
-    // Validar stocks
-    if (body.stockMinimo > body.stockMaximo) {
-        throw new Error('El stock mínimo no puede ser mayor al stock máximo');
-    }
+    // Movimiento inicial
+    const movimiento = await Movimiento.create({
+      fecha:           new Date(),
+      cantidadIngreso: body.stock,
+      cantidadVendida: 0,
+      inventario_id:   inventario.id
+    }, { transaction: t });
 
-    try {
-        // Crear inventario
-        const inventario = new Inventario({
-            stockMinimo: body.stockMinimo,
-            precioVenta: body.precioVenta,
-            precioCompra: body.precioCompra,
-            stock: body.stock,
-            stockMaximo: body.stockMaximo,
-            idProducto: body.idProducto
-        });
-
-        const inventarioGuardado = await inventario.save();
-
-        // Crear movimiento inicial con cantidad igual al stock inicial
-        const movimientoInicial = new Movimiento({
-            fecha: new Date(),
-            cantidadIngreso: body.stock,
-            cantidadVendida: 0,
-            inventario: inventarioGuardado._id
-        });
-
-        const movimientoGuardado = await movimientoInicial.save();
-
-        // Asociar el movimiento al inventario
-        inventarioGuardado.movimientos.push(movimientoGuardado._id);
-        await inventarioGuardado.save();
-
-        return inventarioGuardado;
-
-    } catch (error) {
-        console.error('Error creando inventario y movimiento inicial:', error);
-        throw error;
-    }
+    await t.commit();
+    return buscarInventarioPorId(inventario.id);
+  } catch (err) {
+    await t.rollback();
+    console.error('Error creando inventario y movimiento inicial:', err);
+    throw err;
+  }
 }
 
-// Función asíncrona para actualizar un inventario
+// Actualizar inventario
 async function actualizarInventario(id, body) {
-    let inventario = await Inventario.findByIdAndUpdate(id, {
-        $set: {
-            stockMinimo: body.stockMinimo,
-            precioVenta: body.precioVenta,
-            precioCompra: body.precioCompra,
-            stock: body.stock,
-            stockMaximo: body.stockMaximo,
-            idDevolucion: body.idDevolucion,
-            idProducto: body.idProducto,
-            detalleFacturas: body.detalleFacturas,
-            movimientos: body.movimientos
-        }
-    }, { new: true });
+  const inventario = await Inventario.findByPk(id);
+  if (!inventario) throw new Error(`Inventario con ID ${id} no encontrado`);
 
-    if (!inventario) {
-        throw new Error(`Inventario con ID ${id} no encontrado`);
-    }
+  await inventario.update({
+    stockMinimo:   body.stockMinimo,
+    precioVenta:   body.precioVenta,
+    precioCompra:  body.precioCompra,
+    stock:         body.stock,
+    stockMaximo:   body.stockMaximo,
+    iddevolucion_id: body.idDevolucion || inventario.iddevolucion_id,
+    idproducto_id: body.idProducto,
+  });
 
-    return inventario;
+  return buscarInventarioPorId(id);
 }
 
-// Función asíncrona para listar todos los inventarios
+// Listar inventarios con relaciones
 async function listarInventarios() {
-    let inventarios = await Inventario.find()
-        .populate('idDevolucion', 'descripcion')
-        .populate('idProducto', 'nombreProducto')
-        .populate('detalleFacturas', 'detalle')
-        .populate('movimientos', 'descripcionMovimiento');
-    return inventarios;
+  const items = await Inventario.findAll({
+    include: [
+      { model: db.Devoluciones, as: 'devolucion' },
+      { model: db.Producto,    as: 'producto' },
+      { model: Movimiento,     as: 'movimientos' }
+    ],
+    order: [['id', 'DESC']]
+  });
+  return items;
 }
 
-// Función asíncrona para buscar un inventario por su ID
+// Buscar inventario por ID
 async function buscarInventarioPorId(id) {
-    try {
-        const inventario = await Inventario.findById(id)
-            .populate('idDevolucion', 'descripcion')
-            .populate('idProducto', 'nombreProducto')
-            .populate('detalleFacturas', 'detalle')
-            .populate('movimientos', 'descripcionMovimiento');
-
-        if (!inventario) {
-            throw new Error(`Inventario con ID ${id} no encontrado`);
-        }
-        return inventario;
-    } catch (err) {
-        console.error(`Error al buscar el inventario por ID: ${err.message}`);
-        throw err;
-    }
+  const inv = await Inventario.findByPk(id, {
+    include: [
+      { model: db.Devoluciones, as: 'devolucion' },
+      { model: db.Producto,    as: 'producto' },
+      { model: Movimiento,     as: 'movimientos' }
+    ]
+  });
+  if (!inv) throw new Error(`Inventario con ID ${id} no encontrado`);
+  return inv;
 }
 
-// Función asíncrona para eliminar un inventario por su ID
+// Eliminar inventario
 async function eliminarInventario(id) {
-    try {
-        const inventario = await Inventario.findByIdAndDelete(id);
-        if (!inventario) {
-            throw new Error(`Inventario con ID ${id} no encontrado`);
-        }
-        return inventario;
-    } catch (err) {
-        console.error(`Error al eliminar el inventario: ${err.message}`);
-        throw err;
-    }
+  const inv = await Inventario.findByPk(id);
+  if (!inv) throw new Error(`Inventario con ID ${id} no encontrado`);
+  await inv.destroy();
+  return inv;
 }
 
-// Función asíncrona para obtener el inventario por idProducto
+// Obtener inventario por idProducto
 async function obtenerInventarioPorProducto(idProducto) {
-    try {
-        // Buscar el inventario que tenga el idProducto correspondiente
-        const inventario = await Inventario.findOne({ idProducto: idProducto });
-        
-        // Si no se encuentra, retornamos null
-        if (!inventario) {
-            return null;
-        }
-        
-        return inventario;
-    } catch (error) {
-        console.error('Error al buscar inventario por idProducto:', error);
-        throw error;
-    }
+  const inv = await Inventario.findOne({
+    where: { idproducto_id: idProducto },
+    include: [ { model: Movimiento, as: 'movimientos' } ]
+  });
+  return inv;
 }
 
 module.exports = {
-    crearInventario,
-    actualizarInventario,
-    listarInventarios,
-    buscarInventarioPorId,
-    eliminarInventario,
-    obtenerInventarioPorProducto
+  crearInventario,
+  actualizarInventario,
+  listarInventarios,
+  buscarInventarioPorId,
+  eliminarInventario,
+  obtenerInventarioPorProducto
 };

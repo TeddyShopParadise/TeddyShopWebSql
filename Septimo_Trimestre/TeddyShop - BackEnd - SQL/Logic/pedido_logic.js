@@ -1,195 +1,177 @@
-const DetallePedido = require('../models/detallePedido_model');
-const Producto = require('../modelsSQL/producto_model');
-const Factura = require('../models/factura_model');
-const Cliente = require('../models/cliente_model');
-const Pedido = require('../models/pedido_model');
-const { separarNombreYApellido } = require('./cliente_logic'); 
+const db = require('../modelsSQL');
+const { Op } = require('sequelize');
 
+const Pedido = db.Pedido;
+const Cliente = db.Cliente;
+const DetallePedido = db.DetallePedido;
+const Factura = db.Factura;
+const Producto = db.Producto;
 
 // Crear nuevo pedido
-const crearPedido = async (body) => {
-    try {
-      let cliente = await Cliente.findOne({ telefonocliente: body.numeroComprador });
-  
-      if (!cliente) {
-        const { nombre, apellido } = separarNombreYApellido(body.nombreComprador);
-        const nuevoCliente = new Cliente({
-        nombrecliente: body.nombreComprador,
-          nombre,
-          apellido,
-          telefonocliente: body.numeroComprador,
-          pedidos: [],
-          facturas: []
-        });
-        cliente = await nuevoCliente.save();
-      }
-  
-      const pedido = new Pedido({
-        nombreComprador: body.nombreComprador,
-        numeroComprador: body.numeroComprador,
-        nombreAgendador: body.nombreAgendador,
-        numeroAgendador: body.numeroAgendador,
-        localidad: body.localidad,
-        direccion: body.direccion,
-        barrio: body.barrio,
-        cliente: cliente._id,
-        estado: body.estado || "pendiente",
-        detallesPedido: [],
-        facturas: []
-      });
-  
-      const pedidoGuardado = await pedido.save();
-  
-      const detallesIds = await Promise.all(body.detallesPedido.map(async (detalle) => {
-        const producto = await Producto.findById(detalle.idProducto);
-        if (!producto) throw new Error(`Producto con ID ${detalle.idProducto} no encontrado`);
-  
-        const detallePedido = new DetallePedido({
-          precioDetallePedido: detalle.precioDetallePedido,
-          cantidadDetallePedido: detalle.cantidadDetallePedido,
-          idPedido: pedidoGuardado._id,
-          idProducto: detalle.idProducto
-        });
-  
-        const detalleGuardado = await detallePedido.save();
-        return detalleGuardado._id;
-      }));
-  
-      pedidoGuardado.detallesPedido = detallesIds;
-      await pedidoGuardado.save();
-  
-      const factura = new Factura({
-        idPedido: pedidoGuardado._id,
-        fecha: new Date(),
-        totalFactura: body.totalFactura || 0, 
-        estado: "emitida"
-      });
-  
-      const facturaGuardada = await factura.save();
-  
-      pedidoGuardado.facturas.push(facturaGuardada._id);
-      await pedidoGuardado.save();
-  
-      cliente.pedidos.push(pedidoGuardado._id);
-      cliente.facturas.push(facturaGuardada._id);
-      await cliente.save();
-  
-      return pedidoGuardado;
-    } catch (err) {
-      console.error('Error al crear pedido:', err.message);
-      throw new Error(`Error al crear el pedido: ${err.message}`);
-    }
-  };
+async function crearPedido(body) {
+  let cliente = await Cliente.findOne({ where: { telefonocliente: body.numeroComprador } });
+
+if (!cliente) {
+  cliente = await Cliente.create({
+    nombrecliente: body.nombreComprador,
+    telefonocliente: body.numeroComprador
+  });
+}
+
+// Asegúrate de que cliente.id es un número mayor que 0
+const pedido = await Pedido.create({
+  nombreComprador: body.nombreComprador,
+  numeroComprador: body.numeroComprador,
+  nombreAgendador: body.nombreAgendador,
+  numeroAgendador: body.numeroAgendador,
+  localidad: body.localidad,
+  direccion: body.direccion,
+  barrio: body.barrio,
+  cliente_id: cliente.id,  // cliente.id debe ser mayor que 0
+  estado: body.estado || 'en_proceso'
+});
+  const detalles = await Promise.all(body.detallesPedido.map(async (detalle) => {
+    const producto = await Producto.findByPk(detalle.idProducto);
+    if (!producto) throw new Error(`Producto con ID ${detalle.idProducto} no encontrado`);
+
+    return await DetallePedido.create({
+      precioDetallePedido: detalle.precioDetallePedido,
+      cantidadDetallePedido: detalle.cantidadDetallePedido,
+      pedido_id: pedido.id,
+      idproducto_id: detalle.idProducto_id
+    });
+  }));
+
+  const ahora = new Date();
+
+  const factura = await Factura.create({
+    pedido_id: pedido.id,
+    totalFactura: body.totalFactura || 0,
+    estado: 'emitida',
+    metodopago_id: body.metodopago_id || 2, 
+    cliente_id: cliente.id,
+    fechaCreacionFactura: ahora.toISOString().split('T')[0], 
+  horaCreacionFactura: ahora.toTimeString().split(' ')[0],             
+  });
+
+  return buscarPedidoPorId(pedido.id);
+}
 
 // Actualizar pedido
 async function actualizarPedido(id, body) {
-    const detallesIds = await Promise.all(body.detallesPedido.map(async (detalleId) => {
-        const detalle = await DetallePedido.findById(detalleId);
-        if (!detalle) throw new Error(`DetallePedido con ID ${detalleId} no encontrado`);
+  const pedido = await Pedido.findByPk(id);
+  if (!pedido) throw new Error(`Pedido con ID ${id} no encontrado`);
 
-        const producto = await Producto.findById(detalle.idProducto);
-        if (!producto) throw new Error(`Producto con ID ${detalle.idProducto} no encontrado`);
-        if (!producto.tamañoProducto) throw new Error(`El producto con ID ${detalle.idProducto} no tiene tamaño definido`);
+  await pedido.update({
+    nombreComprador: body.nombreComprador,
+    numeroComprador: body.numeroComprador,
+    nombreAgendador: body.nombreAgendador,
+    numeroAgendador: body.numeroAgendador,
+    localidad: body.localidad,
+    direccion: body.direccion,
+    barrio: body.barrio,
+    cliente_id: body.cliente_id,
+    estado: body.estado
+  });
 
-        return detalle._id;
-    }));
-
-    const pedidoActualizado = await Pedido.findByIdAndUpdate(id, {
-        $set: {
-            nombreComprador: body.nombreComprador,
-            numeroComprador: body.numeroComprador,
-            nombreAgendador: body.nombreAgendador,
-            numeroAgendador: body.numeroAgendador,
-            localidad: body.localidad,
-            direccion: body.direccion,
-            barrio: body.barrio,
-            cliente: body.cliente,           
-            estado: body.estado, 
-            detallesPedido: detallesIds,
-            facturas: body.facturas || []
-        }
-    }, { new: true });
-
-    return pedidoActualizado;
+  return buscarPedidoPorId(id);
 }
 
-// Listar todos los pedidos
+// Listar pedidos
 async function listarPedidos() {
-    const pedidos = await Pedido.find()
-        .populate('cliente', 'telefonocliente')
-        .populate({
-            path: 'detallesPedido',
-            populate: { path: 'idProducto' }
-        })
-        .populate({
-            path: 'facturas',
-            options: { sort: { fecha: -1 } } 
-        });
+  const pedidos = await Pedido.findAll({
+    include: [
+      { model: Cliente, as: 'cliente', attributes: ['id','telefonocliente'] },
+      {
+        model: DetallePedido,
+        as: 'detallesPedido',
+        include: [{
+          model: Producto,
+          as: 'producto',
+          attributes: ['id', 'tamanoproducto', 'historial_precio_id'],
+          include: [{
+            model: db.HistorialPrecio,
+            as: 'HistorialPrecio',
+            attributes: ['precio'],
+            where: { estadoPrecio: true },
+            required: false
+          }]
+        }]
+      },
+      {
+        model: Factura,
+        as: 'facturas',
+        order: [['fecha', 'DESC']]
+      }
+    ],
+    order: [['id', 'DESC']]
+  });
 
-    return pedidos;
+  return pedidos;
 }
-
-// Buscar pedido por ID
+// Buscar por ID
 async function buscarPedidoPorId(id) {
-    try {
-        const pedido = await Pedido.findById(id)
-            .populate('cliente', 'telefonocliente')
-            .populate({
-                path: 'detallesPedido',
-                populate: { path: 'idProducto' }
-            })
-            .populate('facturas');
+  const pedido = await Pedido.findByPk(id, {
+    include: [
+      { 
+        model: DetallePedido,
+        as: 'detallesPedido',
+        include: [{
+          model: Producto,
+          as: 'producto',
+          attributes: ['id', 'tamanoproducto', 'historial_precio_id'],
+          include: [{
+            model: db.HistorialPrecio,
+            as: 'HistorialPrecio',
+            attributes: ['precio'],
+            where: { estadoPrecio: true },
+            required: false
+          }]
+        }]
+      },
+      { model: Factura, as: 'facturas' }
+    ]
+  });
 
-        if (!pedido) throw new Error(`Pedido con ID ${id} no encontrado`);
-        return pedido;
-    } catch (err) {
-        console.error(`Error al buscar el pedido por ID: ${err.message}`);
-        throw err;
-    }
+  if (!pedido) throw new Error(`Pedido con ID ${id} no encontrado`);
+  return pedido;
 }
 
 // Eliminar pedido
 async function eliminarPedido(id) {
-    try {
-        const pedido = await Pedido.findByIdAndDelete(id);
-        if (!pedido) throw new Error(`Pedido con ID ${id} no encontrado`);
-        return pedido;
-    } catch (err) {
-        console.error(`Error al eliminar el pedido: ${err.message}`);
-        throw err;
-    }
+  const pedido = await Pedido.findByPk(id);
+  if (!pedido) throw new Error(`Pedido con ID ${id} no encontrado`);
+
+  await pedido.destroy();
+  return pedido;
 }
 
-// Actualizar estado del pedido
+// Actualizar estado
 async function actualizarEstado(id, nuevoEstado) {
-    const pedido = await Pedido.findByIdAndUpdate(
-        id,
-        { estado: nuevoEstado },
-        { new: true }
-    );
+  const pedido = await Pedido.findByPk(id);
+  if (!pedido) throw new Error(`Pedido con ID ${id} no encontrado`);
 
-    if (!pedido) throw new Error(`Pedido con ID ${id} no encontrado`);
-    return pedido;
+  await pedido.update({ estado: nuevoEstado });
+  return pedido;
 }
 
 // Agregar factura a pedido
 async function agregarFacturaAPedido(idPedido, idFactura) {
-    const pedidoActualizado = await Pedido.findByIdAndUpdate(
-        idPedido,
-        { $push: { facturas: idFactura } },
-        { new: true }
-    );
+  const factura = await Factura.findByPk(idFactura);
+  if (!factura) throw new Error(`Factura con ID ${idFactura} no encontrada`);
 
-    if (!pedidoActualizado) throw new Error(`Pedido con ID ${idPedido} no encontrado`);
-    return pedidoActualizado;
+  factura.pedido_id = idPedido;
+  await factura.save();
+
+  return buscarPedidoPorId(idPedido);
 }
 
 module.exports = {
-    crearPedido,
-    actualizarPedido,
-    listarPedidos,
-    buscarPedidoPorId,
-    eliminarPedido,
-    actualizarEstado,
-    agregarFacturaAPedido
+  crearPedido,
+  actualizarPedido,
+  listarPedidos,
+  buscarPedidoPorId,
+  eliminarPedido,
+  actualizarEstado,
+  agregarFacturaAPedido
 };

@@ -68,6 +68,7 @@ async function listarCatalogosActivos() {
         include: [
             {
                 model: Compania,
+                as: 'compania',  
                 attributes: ['nombreempresa']
             },
             {
@@ -78,6 +79,7 @@ async function listarCatalogosActivos() {
         ]
     });
 }
+
 
 // Función asíncrona para buscar un catálogo por su ID 
 async function buscarCatalogoPorId(id) {

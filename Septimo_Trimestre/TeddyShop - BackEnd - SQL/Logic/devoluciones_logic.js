@@ -1,68 +1,74 @@
-const Devoluciones = require('../models/devoluciones_model');
-const Inventario = require('../models/inventario_model'); 
+const db = require('../modelsSQL');
+const { Op } = require('sequelize');
 
-// Función asíncrona para crear una nueva devolución
+const Devoluciones = db.Devoluciones;
+const Inventario   = db.Inventario;
+
+// Crear nueva devolución
 async function crearDevolucion(body) {
-    let devolucion = new Devoluciones({
-        detalleDevolucion: body.detalleDevolucion,
-        inventarios: body.inventarios 
-    });
+  // Crear registro de devolución
+  const devolucion = await Devoluciones.create({
+    detalleDevolucion: body.detalleDevolucion,
+    // Suponemos que body.inventarios es arreglo de inventario IDs
+  });
 
-    return await devolucion.save();
+  // Asociar devoluciones <-> inventarios (muchos a muchos o hasMany)
+  if (Array.isArray(body.inventarios) && body.inventarios.length) {
+    await devolucion.setInventarios(body.inventarios);
+  }
+
+  return buscarDevolucionPorId(devolucion.id);
 }
 
-// Función asíncrona para actualizar una devolución
+// Actualizar una devolución
 async function actualizarDevolucion(id, body) {
-    let devolucion = await Devoluciones.findByIdAndUpdate(id, {
-        $set: {
-            detalleDevolucion: body.detalleDevolucion,
-            inventarios: body.inventarios 
-        }
-    }, { new: true });
+  const devolucion = await Devoluciones.findByPk(id);
+  if (!devolucion) throw new Error(`Devolución con ID ${id} no encontrada`);
 
-    return devolucion;
+  await devolucion.update({ detalleDevolucion: body.detalleDevolucion });
+
+  if (Array.isArray(body.inventarios)) {
+    await devolucion.setInventarios(body.inventarios);
+  }
+
+  return buscarDevolucionPorId(id);
 }
 
-// Función asíncrona para listar todas las devoluciones
+// Listar todas las devoluciones
 async function listarDevoluciones() {
-    let devoluciones = await Devoluciones.find()
-        .populate('inventarios', 'nombreInventario'); 
-    return devoluciones;
+  const devoluciones = await Devoluciones.findAll({
+    include: [
+      { model: Inventario, as: 'inventarios' }
+    ],
+    order: [['id', 'DESC']]
+  });
+  return devoluciones;
 }
 
-// Función asíncrona para buscar una devolución por su ID
+// Buscar devolución por ID
 async function buscarDevolucionPorId(id) {
-    try {
-        const devolucion = await Devoluciones.findById(id)
-            .populate('inventarios', 'nombreInventario'); 
-        if (!devolucion) {
-            throw new Error(`Devolución con ID ${id} no encontrada`);
-        }
-        return devolucion;
-    } catch (err) {
-        console.error(`Error al buscar la devolución por ID: ${err.message}`);
-        throw err;
-    }
+  const devolucion = await Devoluciones.findByPk(id, {
+    include: [
+      { model: Inventario, as: 'inventarios' }
+    ]
+  });
+  if (!devolucion) throw new Error(`Devolución con ID ${id} no encontrada`);
+  return devolucion;
 }
 
-// Función asíncrona para eliminar una devolución por su ID
+// Eliminar devolución
 async function eliminarDevolucion(id) {
-    try {
-        const devolucion = await Devoluciones.findByIdAndDelete(id);
-        if (!devolucion) {
-            throw new Error(`Devolución con ID ${id} no encontrada`);
-        }
-        return devolucion;
-    } catch (err) {
-        console.error(`Error al eliminar la devolución: ${err.message}`);
-        throw err;
-    }
+  const devolucion = await Devoluciones.findByPk(id);
+  if (!devolucion) throw new Error(`Devolución con ID ${id} no encontrada`);
+
+  await devolucion.destroy();
+  return devolucion;
 }
 
 module.exports = {
-    crearDevolucion,
-    actualizarDevolucion,
-    listarDevoluciones,
-    buscarDevolucionPorId,
-    eliminarDevolucion
+  crearDevolucion,
+  actualizarDevolucion,
+  listarDevoluciones,
+  buscarDevolucionPorId,
+  eliminarDevolucion
 };
