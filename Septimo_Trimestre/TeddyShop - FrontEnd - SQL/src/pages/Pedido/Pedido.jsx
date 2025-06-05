@@ -190,7 +190,7 @@ const Pedido = () => {
     const updatedPedido = await response.json();
     setPedidos(
       pedidos.map((pedido) =>
-        pedido._id === updatedPedido._id ? updatedPedido : pedido
+        pedido.id === updatedPedido.id ? updatedPedido : pedido
       )
     );
     setSnackbarMessage('Pedido actualizado con éxito');
@@ -210,7 +210,7 @@ const Pedido = () => {
       await fetch(`${apiUrl}/pedido/${currentId}`, {
         method: 'DELETE',
       });
-      setPedidos((prevPedidos) => prevPedidos.filter((pedido) => pedido._id !== currentId));
+      setPedidos((prevPedidos) => prevPedidos.filter((pedido) => pedido.id !== currentId));
       setSnackbarMessage('Pedido eliminado con éxito');
       setOpenSnackbar(true);
     } catch (error) {
@@ -255,34 +255,41 @@ const Pedido = () => {
     setSelectedPedido(pedido);
     setOpenDetailDialog(true);
   };
+const obtenerPedidoPorId = async (pedidoId) => {
+  const response = await fetch(`${apiUrl}/pedido/${pedidoId}`);
+  if (!response.ok) throw new Error('Error al obtener pedido');
+  return await response.json();
+};
 
-  
   const handleEstadoChange = async (pedidoId, nuevoEstado) => {
-    try {
-      const response = await fetch(`${apiUrl}/pedido/estado/${pedidoId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: nuevoEstado }),
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al actualizar el estado');
-      }
-  
-      const actualizado = await response.json();
-      setPedidos(prev =>
-        prev.map(p => (p._id === pedidoId ? actualizado : p))
-      );
-      setSnackbarMessage('Estado actualizado con éxito');
-      setOpenSnackbar(true);
-    } catch (error) {
-      console.error('Error al cambiar el estado:', error);
-      setSnackbarMessage('Error al actualizar el estado: ' + error.message);
-      setOpenSnackbar(true);
+  try {
+    const response = await fetch(`${apiUrl}/pedido/estado/${pedidoId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado: nuevoEstado }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al actualizar el estado');
     }
-  };
-  
+
+    await response.json(); 
+
+    const actualizado = await obtenerPedidoPorId(pedidoId);
+
+    setPedidos(prev =>
+      prev.map(p => (p.id === pedidoId ? actualizado : p))
+    );
+    setSnackbarMessage('Estado actualizado con éxito');
+    setOpenSnackbar(true);
+  } catch (error) {
+    console.error('Error al cambiar el estado:', error);
+    setSnackbarMessage('Error al actualizar el estado: ' + error.message);
+    setOpenSnackbar(true);
+  }
+};
+
 
   if (loading) {
     return <div>Cargando...</div>;
@@ -304,7 +311,7 @@ const Pedido = () => {
   
   const handleGenerarFactura = async (pedidoId) => {
     try {
-      const pedidoSeleccionado = pedidos.find(p => p._id === pedidoId);
+      const pedidoSeleccionado = pedidos.find(p => p.id === pedidoId);
   
       if (pedidoSeleccionado.estado !== 'realizado') {
         setSnackbarMessage('Solo puedes generar factura para pedidos realizados');
@@ -343,7 +350,7 @@ const Pedido = () => {
   };
   
   const detallesFiltrados = detalles.filter(
-    (detalle) => detalle.idPedido?._id === selectedPedido?._id
+    (detalle) => detalle.idPedido?.id === selectedPedido?.id
   );
   
   return (
@@ -638,7 +645,7 @@ const Pedido = () => {
                       mt: 1,
                     }}
                   >
-                    {sortedPedidos.filter(p => p.estado === 'pendiente').length}
+                    {sortedPedidos.filter(p => p.estado === 'cancelado').length}
                   </Typography>
                 </Box>
                 <Box
@@ -731,11 +738,11 @@ const Pedido = () => {
                         display="flex"
                         alignItems="center"
                         gap={1}
-                        onClick={() => handleSort('nombreComprador')}
+                        onClick={() => handleSort('nombrecomprador')}
                         sx={{ cursor: 'pointer' }}
                       >
                         Nombre del Comprador
-                        {sortBy === 'nombreComprador' &&
+                        {sortBy === 'nombrecomprador' &&
                           (sortOrder === 'asc' ? (
                             <ArrowUpward fontSize="small" />
                           ) : (
@@ -748,11 +755,11 @@ const Pedido = () => {
                         display="flex"
                         alignItems="center"
                         gap={1}
-                        onClick={() => handleSort('tamañoOso')}
+                        onClick={() => handleSort('tamanoproducto')}
                         sx={{ cursor: 'pointer' }}
                       >
                         Tamaño del Oso
-                        {sortBy === 'tamañoOso' &&
+                        {sortBy === 'tamanoproducto' &&
                           (sortOrder === 'asc' ? (
                             <ArrowUpward fontSize="small" />
                           ) : (
@@ -785,21 +792,21 @@ const Pedido = () => {
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((pedido) => (
                       <TableRow
-                        key={pedido._id}
+                        key={pedido.id}
                         sx={{
                           '&:hover': {
                             backgroundColor: '#fff0f5',
                           },
                         }}
                       >
-                        <TableCell>{pedido.nombreComprador}</TableCell>
-                        <TableCell>
-                          {pedido.detallesPedido.map(detalle => (
-                            <div key={detalle._id}>
-                              {detalle.idProducto?.tamañoProducto}
-                            </div>
-                          ))}
-                        </TableCell>
+                      <TableCell>{pedido?.nombreComprador || 'N/A'}</TableCell>
+                     <TableCell>
+                        {(pedido?.detallesPedido ?? []).map(detalle => (
+                          <div key={detalle.id}>
+                            {detalle.producto?.tamanoproducto || 'Sin tamaño'}
+                          </div>
+                        ))}
+                      </TableCell>
                         <TableCell>
                           <FormControl fullWidth size="small" sx={{
                             '& .MuiOutlinedInput-root': {
@@ -811,9 +818,9 @@ const Pedido = () => {
                           }}>
                             <Select
                               value={pedido.estado || 'en_proceso'}
-                              onChange={(e) => handleEstadoChange(pedido._id, e.target.value)}
+                              onChange={(e) => handleEstadoChange(pedido.id, e.target.value)}
                             >
-                              <MenuItem value="pendiente">Cancelado</MenuItem>
+                              <MenuItem value="cancelado">Cancelado</MenuItem>
                               <MenuItem value="en_proceso">En proceso</MenuItem>
                               <MenuItem value="realizado">Realizado</MenuItem>
                             </Select>
@@ -833,7 +840,7 @@ const Pedido = () => {
                           </IconButton>
                           <IconButton
                             onClick={() => {
-                              setCurrentId(pedido._id);
+                              setCurrentId(pedido.id);
                               setOpenDeleteDialog(true);
                             }}
                             sx={{
@@ -859,7 +866,7 @@ const Pedido = () => {
                           <Button 
                             variant="contained"
                             disabled={pedido.estado !== 'realizado'}
-                            onClick={() => handleGenerarFactura(pedido._id)}
+                            onClick={() => handleGenerarFactura(pedido.id)}
                             startIcon={<ReceiptLongIcon />}
                             sx={{
                               ml: 1,
@@ -877,7 +884,7 @@ const Pedido = () => {
                               }
                             }}
                           >
-                            Generar Factura
+                            Generar Pedido
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -999,41 +1006,49 @@ const Pedido = () => {
                 </Paper>
               )}
             <Divider sx={{ my: 2, backgroundColor: '#f8c8dc' }} />
-<Typography 
-  variant="h6" 
-  sx={{ 
-    color: '#b04e6f',
-    fontFamily: '"Baloo 2", cursive',
-    mb: 1
-  }}
->
-  Productos del Pedido:
-</Typography>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#b04e6f',
+                fontFamily: '"Baloo 2", cursive',
+                mb: 1
+              }}
+            >
+              Productos del Pedido:
+            </Typography>
 
-<Table size="small" sx={{ backgroundColor: '#fff0f4', borderRadius: '10px', overflow: 'hidden' }}>
-  <TableHead>
-    <TableRow sx={{ backgroundColor: '#ffe4ec' }}>
-      <TableCell><strong>Producto</strong></TableCell>
-      <TableCell><strong>Cantidad</strong></TableCell>
-      <TableCell><strong> Precio</strong></TableCell>
-      <TableCell><strong>Pedido</strong></TableCell>
-    </TableRow>
-  </TableHead>
-  
-  <TableBody>
-  {detalles
-    .filter((detalle) => detalle.idPedido?._id === selectedPedido?._id)
-    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-    .map((detalle) => (
-      <TableRow key={detalle._id}>
-        <TableCell>{detalle.idProducto?.tamañoProducto || 'Producto eliminado'}</TableCell>
-        <TableCell>{detalle.cantidadDetallePedido}</TableCell>
-        <TableCell>${detalle.precioDetallePedido.toFixed(2)}</TableCell>
-        <TableCell>{detalle.idPedido?._id || 'Sin pedido'}</TableCell>
-      </TableRow>
-  ))}
-</TableBody>
-</Table>
+            <Table size="small" sx={{ backgroundColor: '#fff0f4', borderRadius: '10px', overflow: 'hidden' }}>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#ffe4ec' }}>
+                  <TableCell><strong>Producto</strong></TableCell>
+                  <TableCell><strong>Cantidad</strong></TableCell>
+                  <TableCell><strong> Precio</strong></TableCell>
+                  <TableCell><strong>Pedido</strong></TableCell>
+                </TableRow>
+              </TableHead>
+              
+            <TableBody>
+              {selectedPedido?.detallesPedido
+                ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((detalle) => {
+                  const precio = Number(detalle.precioDetallePedido);
+                  return (
+                    <TableRow key={detalle.id}>
+                      <TableCell>
+                        {detalle.producto?.id || 'Producto eliminado'}
+                      </TableCell>
+                      <TableCell>{detalle.cantidadDetallePedido}</TableCell>
+                      <TableCell>
+                        {detalle.producto?.HistorialPrecio?.precio
+                          ? `$${parseFloat(detalle.producto.HistorialPrecio.precio).toFixed(0)}`
+                          : 'Precio inválido'}
+                      </TableCell>
+                      <TableCell>{detalle.pedido?.id || detalle.idpedido_id || 'Sin pedido'}</TableCell>
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+            </Table>
             </DialogContent>
             <DialogActions>
               <Button 

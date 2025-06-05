@@ -143,233 +143,241 @@ export default function CatalogoUsuario() {
     setPedido({ ...pedido, [e.target.name]: e.target.value });
   };
 
-  const handleSubmitPedido = async () => {
-    const { precioFormateado, precioNumerico } = (() => {
-      if (!productoSeleccionado?.historialPrecios?.length) {
-        return { precioFormateado: "No disponible", precioNumerico: 0 };
-      }
-  
-      const historialCompleto = productoSeleccionado.historialPrecios
-        .map(precioId => historialPrecios.find(p => p._id === precioId))
-        .filter(Boolean);
-  
-      const ultimoRegistro = historialCompleto.at(-1);
-      
-      return {
-        precioFormateado: ultimoRegistro 
-          ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(ultimoRegistro.precio)
-          : "No disponible",
-        precioNumerico: ultimoRegistro?.precio || 0
-      };
-    })();
-  
-    // Obtener el nombre del método de pago
-    const metodoPagoNombre = metodosPago.find(
-      (metodo) => metodo._id === pedido.metodoPago
-    )?.nombreMetodoPago || 'No seleccionado';
-  
-    // Crear mensaje de WhatsApp
-    const mensaje = `¡Hola! Me gustaría realizar el siguiente pedido:  
-  
-    📌 *Imagen del Producto:*  
-    ${productoSeleccionado?.imagen || 'No disponible'}  
+    const handleSubmitPedido = async () => {
+      const { precioFormateado, precioNumerico } = (() => {
+        if (!productoSeleccionado?.HistorialPrecio?.length) {
+          return { precioFormateado: "No disponible", precioNumerico: 0 };
+        }
     
-    🆔 *ID del Producto:* ${productoSeleccionado?._id || 'No disponible'}  
-    📦 *Producto:* ${productoSeleccionado?.estiloProducto || ''}  
-    📏 *Tamaño:* ${productoSeleccionado?.tamañoProducto || ''}  
-    💵 *Metodo de pago seleccionado:* ${metodoPagoNombre}
-    💰 *Total:* ${precioFormateado}  
+        const historialCompleto = productoSeleccionado.HistorialPrecio
+          .map(precioId => HistorialPrecio.find(p => p.id === precioId))
+          .filter(Boolean);
     
-    🔹 *Datos del Pedido*  
-    👤 *Nombre del Comprador:* ${pedido.nombreComprador}  
-    📞 *Número del Comprador:* ${pedido.numeroComprador}  
-    👤 *Nombre del Agendador:* ${pedido.nombreAgendador}  
-    📞 *Número del Agendador:* ${pedido.numeroAgendador}  
-    📍 *Localidad:* ${pedido.localidad}  
-    🏠 *Dirección:* ${pedido.direccion}  
-    🏘 *Barrio:* ${pedido.barrio}`;
-  
-    const mensajeCodificado = encodeURIComponent(mensaje.trim());
-    const numeroWhatsApp = "573217292955";
-    const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${mensajeCodificado}`;
-    window.open(urlWhatsApp, "_blank");
-  
-    try {
-      // Paso 1: Crear el pedido
-      const pedidoCompleto = {
-        nombreComprador: pedido.nombreComprador || "Sin nombre",
-        numeroComprador: pedido.numeroComprador || "0000000000",
-        nombreAgendador: pedido.nombreAgendador || "Sin nombre",
-        numeroAgendador: pedido.numeroAgendador || "0000000000",
-        localidad: pedido.localidad || "Sin localidad",
-        direccion: pedido.direccion || "Sin dirección",
-        barrio: pedido.barrio || "Sin barrio",
-        cliente: "671976d2269e33c817066681",
-        facturas: [],
-        detallesPedido: [] // Inicializar como array vacío
-      };
-  
-  
-      const response = await fetch(`${apiUrl}/pedido`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pedidoCompleto)
-      });
-  
-      const responseData = await response.json();
-  
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${JSON.stringify(responseData)}`);
-      }
-  
-      console.log('Pedido guardado:', responseData);
-  
-      // Paso 2: Crear el detalle del pedido
-      const detallePedido = {
-        precioDetallePedido: precioNumerico,
-        cantidadDetallePedido: 1,
-        idPedido: responseData._id,
-        idProducto: productoSeleccionado._id
-      };
-  
-      console.log("Enviando detallePedido:", detallePedido);
-  
-      const detalleResponse = await fetch(`${apiUrl}/detallesPedido`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(detallePedido)
-      });
-  
-      const detalleData = await detalleResponse.json();
-  
-      if (!detalleResponse.ok) {
-        throw new Error(`Error en detallePedido: ${JSON.stringify(detalleData)}`);
-      }
-  
-      console.log('DetallePedido guardado:', detalleData);
-  
-      // Paso 3: Crear la factura
-      const factura = {
-        fechaCreacionFactura: new Date().toISOString(),
-        horaCreacionFactura: new Date().toLocaleTimeString('es-MX'),
-        pedido: responseData._id,
-        detallesFactura: [],
-        metodoPago: pedido.metodoPago,
-      };
-  
-      console.log("Enviando Factura:", factura);
+        const ultimoRegistro = historialCompleto.at(-1);
+    
+        return {
+          precioFormateado: ultimoRegistro
+            ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(ultimoRegistro.precio)
+            : "No disponible",
+          precioNumerico: ultimoRegistro?.precio || 0
+        };
+      })();
+    
+      const metodoPagoNombre = metodosPago.find(
+        (metodo) => metodo.id === pedido.metodoPago
+      )?.nombremetodopago || 'No seleccionado';
+    
+      const mensaje = `¡Hola! Me gustaría realizar el siguiente pedido:  
+    
+      📌 *Imagen del Producto:*  
+      ${productoSeleccionado?.imagen || 'No disponible'}  
       
-      const facturaResponse = await fetch(`${apiUrl}/factura`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(factura)
-      });
-  
-      const facturaData = await facturaResponse.json();
+      🆔 *ID del Producto:* ${productoSeleccionado?.id || 'No disponible'}  
+      📦 *Producto:* ${productoSeleccionado?.estiloProducto || ''}  
+      📏 *Tamaño:* ${productoSeleccionado?.tamanoproducto || ''}  
+      💵 *Metodo de pago seleccionado:* ${metodoPagoNombre}
+      💰 *Total:* ${precioFormateado}  
       
-      if (!facturaResponse.ok) {
-        throw new Error(`Error en Factura: ${JSON.stringify(facturaData)}`);
+      🔹 *Datos del Pedido*  
+      👤 *Nombre del Comprador:* ${pedido.nombreComprador}  
+      📞 *Número del Comprador:* ${pedido.numeroComprador}  
+      👤 *Nombre del Agendador:* ${pedido.nombreAgendador}  
+      📞 *Número del Agendador:* ${pedido.numeroAgendador}  
+      📍 *Localidad:* ${pedido.localidad}  
+      🏠 *Dirección:* ${pedido.direccion}  
+      🏘 *Barrio:* ${pedido.barrio}`;
+    
+      const mensajeCodificado = encodeURIComponent(mensaje.trim());
+      const numeroWhatsApp = "573217292955";
+      const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${mensajeCodificado}`;
+      window.open(urlWhatsApp, "_blank");
+    
+      try {
+        // Paso 1: Crear el pedido
+        const pedidoCompleto = {
+          nombreComprador: pedido.nombreComprador || "Sin nombre",
+          numeroComprador: pedido.numeroComprador || "0000000000",
+          nombreAgendador: pedido.nombreAgendador || "Sin nombre",
+          numeroAgendador: pedido.numeroAgendador || "0000000000",
+          localidad: pedido.localidad || "Sin localidad",
+          direccion: pedido.direccion || "Sin dirección",
+          barrio: pedido.barrio || "Sin barrio",
+         cliente_id: 0,
+          facturas: [],
+          detallesPedido: []
+        };
+    
+        console.log("Enviando pedido:", JSON.stringify(pedidoCompleto, null, 2));
+    
+        const response = await fetch(`${apiUrl}/pedido`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pedidoCompleto)
+        });
+    
+        const responseData = await response.json();
+    
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${JSON.stringify(responseData)}`);
+        }
+    
+        console.log('Pedido guardado:', responseData);
+    
+        // Función para crear detalle de pedido
+        const crearDetallePedido = async (productoSeleccionado, pedidoCreado, precioNumerico) => {
+          try {
+            // Crear objeto con los nombres de campo que espera el backend
+            const detallePedido = {
+              precioDetallePedido: precioNumerico,
+              cantidadDetallePedido: 1,
+              idPedido: pedidoCreado.id,          // Campo para la validación
+              idproducto_id: productoSeleccionado.id // Campo para el modelo de base de datos
+            };
+        
+            console.log('Enviando detallePedido:', detallePedido);
+        
+            const response = await fetch(`${apiUrl}/detallesPedido`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(detallePedido)
+            });
+        
+            if (!response.ok) {
+              const errorData = await response.json();
+              console.error('Error del backend:', errorData);
+              throw new Error(`Error en detalle: ${JSON.stringify(errorData)}`);
+            }
+        
+            const result = await response.json();
+            console.log('DetallePedido creado exitosamente:', result);
+            return result;
+          } catch (error) {
+            console.error('Error en detalle:', error);
+            throw error;
+          }
+        };
+  
+        // Paso 2: Crear el detalle del pedido y almacenar el resultado
+        const detalleData = await crearDetallePedido(productoSeleccionado, responseData, precioNumerico);
+        
+        // Paso 3: Buscar inventario relacionado
+        let inventarioRelacionado = null;
+        try {
+          const inventarioResponse = await fetch(`${apiUrl}/inventario/por-producto/${productoSeleccionado.id}`);
+          if (inventarioResponse.ok) {
+            inventarioRelacionado = await inventarioResponse.json();
+          } else {
+            console.warn('No se encontró inventario para el producto.');
+          }
+        } catch (error) {
+          console.error('Error buscando inventario relacionado:', error);
+        }
+    
+        // Paso 4: Obtener o crear la factura
+        let facturaData;
+        try {
+          const facturaExistenteResponse = await fetch(`${apiUrl}/factura/pedido/${responseData.id}`);
+          if (facturaExistenteResponse.ok) {
+            facturaData = await facturaExistenteResponse.json();
+            console.log('Factura existente encontrada:', facturaData);
+          } else {
+            const factura = {
+              fechaCreacionFactura: new Date().toISOString().split('T')[0],
+              horaCreacionFactura: new Date().toLocaleTimeString('es-MX'),
+              pedido: responseData.id,
+              metodoPago: pedido.metodoPago,
+              detallesFactura: [] // Se llenará después
+            };
+    
+            const facturaResponse = await fetch(`${apiUrl}/factura`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(factura)
+            });
+    
+            facturaData = await facturaResponse.json();
+            if (!facturaResponse.ok) {
+              throw new Error(`Error en Factura: ${JSON.stringify(facturaData)}`);
+            }
+          }
+        } catch (error) {
+          console.error('Error con la factura:', error);
+          throw error;
+        }
+    
+        // Paso 5: Crear el detalle de factura con nombres de campo correctos
+        const detalleFactura = {
+          precioDetalleFactura: precioNumerico.toString(),
+          cantidadDetalleFactura: 1,
+          idproducto_id: productoSeleccionado.id,  // Cambiado a idproducto_id
+          idinventario_id: inventarioRelacionado?.id || null,  // Cambiado a idinventario_id
+          idfactura_id: facturaData.id  // Cambiado a idfactura_id
+        };
+    
+        const detalleFacturaResponse = await fetch(`${apiUrl}/detallesFactura`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(detalleFactura)
+        });
+    
+        const detalleFacturaData = await detalleFacturaResponse.json();
+        if (!detalleFacturaResponse.ok) {
+          throw new Error(`Error en Detalle Factura: ${JSON.stringify(detalleFacturaData)}`);
+        }
+    
+        // Paso 6: Actualizar el pedido
+  
+  
+        const updatePedido = {
+          nombreComprador: responseData.nombreComprador,
+          numeroComprador: responseData.numeroComprador,
+          nombreAgendador: responseData.nombreAgendador,
+          numeroAgendador: responseData.numeroAgendador,
+          localidad: responseData.localidad,
+          direccion: responseData.direccion,
+          barrio: responseData.barrio,
+          detallesPedido: [detalleData.id],
+          facturas: [facturaData.id],
+          cliente_id: responseData.cliente.id
+        };
+        
+    
+        const updateResponsePedido = await fetch(`${apiUrl}/pedido/${responseData.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatePedido)
+        });
+    
+        const updateResponseText = await updateResponsePedido.text();
+        if (!updateResponsePedido.ok) {
+          throw new Error(`Error actualizando pedido: ${updateResponseText}`);
+        }
+    
+        console.log('Pedido actualizado con detalle y factura');
+        setSnackbarMessage('Pedido realizado con éxito');
+        setOpenSnackbar(true);
+  
+  // ✅ Mostrar alerta de éxito
+      await Swal.fire({
+        title: '¡Pedido realizado!',
+        text: 'Tu pedido se ha registrado correctamente.',
+        icon: 'success',
+        confirmButtonText: 'Aceptar'
+      }); 
+      } catch (error) {
+        console.error('Error completo:', error);
+        setSnackbarMessage(error.message || 'Error al guardar el pedido');
+        setOpenSnackbar(true);
       }
-  
-      console.log('Factura guardada:', facturaData);
-  
-      // Paso 4: Crear el detalle de la factura
-      const detalleFactura = {
-        precioDetalleFactura: precioNumerico.toString(),
-        cantidadDetalleFactura: 1,
-        idProducto: productoSeleccionado._id,
-        idFactura: facturaData._id 
-      };
-  
-      console.log("Enviando Detalle Factura:", detalleFactura);
-      
-      const detalleFacturaResponse = await fetch(`${apiUrl}/detallesFactura`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(detalleFactura)
-      });
-  
-      const detalleFacturaData = await detalleFacturaResponse.json();
-      
-      if (!detalleFacturaResponse.ok) {
-        throw new Error(`Error en Detalle Factura: ${JSON.stringify(detalleFacturaData)}`);
-      }
-  
-      console.log('Detalle Factura guardada:', detalleFacturaData);
-  
-      // Paso 5: Actualizar la factura con el detalle
-      const updateFactura = {
-        fechaCreacionFactura: facturaData.fechaCreacionFactura,
-        horaCreacionFactura: facturaData.horaCreacionFactura,
-        pedido: facturaData.pedido,
-        metodoPago: facturaData.metodoPago,
-        detallesFactura: [detalleFacturaData._id]
-      };
-      
-      const updateResponse = await fetch(`${apiUrl}/factura/${facturaData._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateFactura)
-      });
-  
-      if (!updateResponse.ok) {
-        throw new Error(`Error actualizando factura: ${await updateResponse.text()}`);
-      }
-  
-      console.log('Factura actualizada con detalle');
-  
-      // Paso 6: Actualizar el pedido con el detalle y la factura
-const updatePedido = {
-nombreComprador: responseData.nombreComprador,
-numeroComprador: responseData.numeroComprador,
-nombreAgendador: responseData.nombreAgendador,
-numeroAgendador: responseData.numeroAgendador,
-localidad: responseData.localidad,
-direccion: responseData.direccion,
-barrio: responseData.barrio,
-detallesPedido: [detalleData._id],
-facturas: [facturaData._id],
-cliente: responseData.cliente
-};
-
-console.log('Intentando actualizar el pedido con:', updatePedido);
-
-const updateResponsePedido = await fetch(`${apiUrl}/pedido/${responseData._id}`, {
-method: 'PUT',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify(updatePedido)
-});
-
-const updateResponseText = await updateResponsePedido.text();
-
-if (!updateResponsePedido.ok) {
-console.error('Error al actualizar pedido - status:', updateResponsePedido.status);
-console.error('Respuesta del servidor:', updateResponseText);
-throw new Error(`Error actualizando pedido: ${updateResponseText}`);
-}
-
-console.log('Pedido actualizado con detalle y factura');
-
-      setSnackbarMessage('Pedido realizado con éxito');
-    } catch (error) {
-      console.error('Error completo:', error);
-      setSnackbarMessage(error.message || 'Error al guardar el pedido');
-      setOpenSnackbar(true);
-    }
-  
-    setOpenSnackbar(true);
-    handleCloseCarritoDialog();
-  };
-
-  
-
+      handleCloseCarritoDialog();
+    };
 
   const handleDetalles = async (catalogo) => {
     setSelectedCatalogo(catalogo);
     setCategoriaFiltro('todos');
     
     try {
-      const productosResponse = await fetch(`${apiUrl}/producto/catalogo/${catalogo._id}`);
+      const productosResponse = await fetch(`${apiUrl}/producto/catalogo/${catalogo.id}`);
       const productosData = await productosResponse.json();
       setProductosCatalogo(productosData);
       
@@ -377,7 +385,7 @@ console.log('Pedido actualizado con detalle y factura');
       productosData.forEach(producto => {
         if (producto.categorias) {
           producto.categorias.forEach(categoria => {
-            if (!categoriasUnicas.some(c => c._id === categoria._id)) {
+            if (!categoriasUnicas.some(c => c.id === categoria.id)) {
               categoriasUnicas.push(categoria);
             }
           });
@@ -408,7 +416,7 @@ console.log('Pedido actualizado con detalle y factura');
       setFilteredProductos(productosCatalogo);
     } else {
       const productosFiltrados = productosCatalogo.filter((producto) =>
-        producto.categorias && producto.categorias.some((cat) => cat._id === categoriaId)
+        producto.categorias && producto.categorias.some((cat) => cat.id === categoriaId)
       );
       setFilteredProductos(productosFiltrados);
     }
@@ -456,7 +464,7 @@ console.log('Pedido actualizado con detalle y factura');
               
               <Grid container spacing={3}>
                 {catalogos.map((catalogo) => (
-                  <Grid item xs={12} sm={6} md={4} key={catalogo._id}>
+                  <Grid item xs={12} sm={6} md={4} key={catalogo.id}>
                     <Card sx={{ 
                       transition: 'transform 0.3s', 
                       '&:hover': { transform: 'scale(1.05)' }, 
@@ -575,7 +583,7 @@ console.log('Pedido actualizado con detalle y factura');
                 >
                   <MenuItem value="todos">Todas las categorías</MenuItem>
                   {categoriasCatalogo.map((categoria) => (
-                    <MenuItem key={categoria._id} value={categoria._id}>
+                    <MenuItem key={categoria.id} value={categoria.id}>
                       {categoria.nombreCategoria}
                     </MenuItem>
                   ))}
@@ -585,7 +593,7 @@ console.log('Pedido actualizado con detalle y factura');
               <Grid container spacing={3}>
                 {currentProductos.length > 0 ? (
                   currentProductos.map((producto) => (
-                    <Grid item xs={12} sm={6} md={3} key={producto._id}>
+                    <Grid item xs={12} sm={6} md={3} key={producto.id}>
                       <Card sx={{ 
                         transition: 'transform 0.3s', 
                         '&:hover': { transform: 'scale(1.05)' }, 
@@ -603,7 +611,7 @@ console.log('Pedido actualizado con detalle y factura');
                       <Typography variant="body1" color="text.secondary">
                         <strong>Precio:</strong>
                         {producto.historialPrecios?.map((precioId, index) => {
-                          const precio = historialPrecios.find(p => p._id === precioId);
+                          const precio = historialPrecios.find(p => p.id === precioId);
                           return precio ? (
                             <div key={index}>
                               {new Intl.NumberFormat('es-CO', { 
@@ -613,7 +621,7 @@ console.log('Pedido actualizado con detalle y factura');
                             </div>
                           ) : null;
                         })}
-                         <strong>Tamaño:</strong> {producto.tamañoProducto}
+                         <strong>Tamaño:</strong> {producto.tamanoproducto}
                       </Typography>
                       
                           <Box mt={2} display="flex" justifyContent="space-between">
@@ -700,7 +708,7 @@ console.log('Pedido actualizado con detalle y factura');
                           <strong>Descripción del Producto:</strong> {productoSeleccionado.estiloProducto}
                         </Typography>
                         <Typography variant="body2" sx={{ textAlign: "left" }}>
-                          <strong>Tamaño:</strong> {productoSeleccionado.tamañoProducto}
+                          <strong>Tamaño:</strong> {productoSeleccionado.tamanoproducto}
                         </Typography>
                         <Typography variant="body2" sx={{ textAlign: "left" }}>
                           <strong>Disponibilidad:</strong> {productoSeleccionado.disponibilidadProducto}
@@ -731,11 +739,11 @@ console.log('Pedido actualizado con detalle y factura');
                       {productoSeleccionado && (
                         <>
                           <Typography variant="body1" gutterBottom><strong>Producto:</strong> {productoSeleccionado.estiloProducto}</Typography>
-                          <Typography variant="body1" gutterBottom><strong>Tamaño:</strong> {productoSeleccionado.tamañoProducto}</Typography>
+                          <Typography variant="body1" gutterBottom><strong>Tamaño:</strong> {productoSeleccionado.tamanoproducto}</Typography>
                           <Typography variant="body1" gutterBottom>
                             <strong>Precio:</strong> 
                             {productoSeleccionado.historialPrecios?.map((precioId, index) => {
-                              const precio = historialPrecios.find(p => p._id === precioId);
+                              const precio = historialPrecios.find(p => p.id === precioId);
                               return precio ? (
                                 <span key={index}>
                                   {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(precio.precio)}
@@ -756,8 +764,8 @@ console.log('Pedido actualizado con detalle y factura');
                                   onChange={handleInputChange}
                                 >
                                   {metodosPago.map((metodo) => (
-                                    <MenuItem key={metodo._id} value={metodo._id}>
-                                      {metodo.nombreMetodoPago}
+                                    <MenuItem key={metodo.id} value={metodo.id}>
+                                      {metodo.nombremetodopago}
                                     </MenuItem>
                                   ))}
                                 </Select>

@@ -221,7 +221,7 @@ const EliminarRol = async (id) => {
   const handleEditClick = (role) => {
     setRole({ nombre: role.nombre, estado: role.estado });
     setIsEditing(true);
-    setCurrentId(role._id);
+    setCurrentId(role.id);
   };
 
   const handleCloseSnackbar = () => {
@@ -507,7 +507,7 @@ const EliminarRol = async (id) => {
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((r) => (
                       <TableRow
-                        key={r._id}
+                        key={r.id}
                         sx={{
                           '&:hover': {
                             backgroundColor: '#fff0f5',
@@ -538,7 +538,7 @@ const EliminarRol = async (id) => {
                             <Edit />
                           </IconButton>
                           <IconButton
-                            onClick={() => EliminarRol(r._id)}
+                            onClick={() => EliminarRol(r.id)}
                             sx={{
                               color: '#e57373',
                               '&:hover': {

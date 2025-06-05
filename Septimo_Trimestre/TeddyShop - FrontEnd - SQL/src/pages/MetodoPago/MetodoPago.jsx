@@ -29,14 +29,14 @@ const apiUrl = getApiUrl();
 
 const MetodoPago = () => {
   const [metodosPago, setMetodosPago] = useState([]);
-  const [nuevoMetodo, setNuevoMetodo] = useState({ nombreMetodoPago: '' });
+  const [nuevoMetodo, setNuevoMetodo] = useState({ nombremetodopago: '' });
   const [editarMetodo, setEditarMetodo] = useState(null);
   const [selectedMetodo, setSelectedMetodo] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState('nombreMetodoPago');
+  const [sortBy, setSortBy] = useState('nombremetodopago');
   const [sortOrder, setSortOrder] = useState('asc');
   const { makeRequest } = useApiRequest();
   
@@ -58,7 +58,7 @@ const MetodoPago = () => {
   }, []);
 
   const crearMetodoPago = async () => {
-    if (!nuevoMetodo.nombreMetodoPago) {
+    if (!nuevoMetodo.nombremetodopago) {
       await Swal.fire({
         icon: 'error',
         title: 'Campo incompleto',
@@ -102,7 +102,7 @@ const MetodoPago = () => {
       },
       onSuccess: (newMetodo) => {
         setMetodosPago([...metodosPago, newMetodo]);
-        setNuevoMetodo({ nombreMetodoPago: '' });
+        setNuevoMetodo({ nombremetodopago: '' });
       }
     });
   };
@@ -111,11 +111,11 @@ const MetodoPago = () => {
     if (!editarMetodo) return;
   
     const metodoActualizar = {
-      nombreMetodoPago: nuevoMetodo.nombreMetodoPago
+      nombremetodopago: nuevoMetodo.nombremetodopago
     };
   
     await makeRequest({
-      url: `${apiUrl}/metodoPago/${editarMetodo._id}`,
+      url: `${apiUrl}/metodoPago/${editarMetodo.id}`,
       method: 'PUT',
       data: metodoActualizar,
       confirm: {
@@ -142,10 +142,10 @@ const MetodoPago = () => {
       },
       onSuccess: (updatedMetodo) => {
         setMetodosPago(metodosPago.map((metodo) =>
-          metodo._id === updatedMetodo._id ? updatedMetodo : metodo
+          metodo.id === updatedMetodo.id ? updatedMetodo : metodo
         ));
         setEditarMetodo(null);
-        setNuevoMetodo({ nombreMetodoPago: '' });
+        setNuevoMetodo({ nombremetodopago: '' });
       }
     });
   };
@@ -183,13 +183,13 @@ const MetodoPago = () => {
         footer: '<a href="/ayuda">¿Necesitas ayuda?</a>'
       },
       onSuccess: () => {
-        setMetodosPago(prevMetodos => prevMetodos.filter(metodo => metodo._id !== id));
+        setMetodosPago(prevMetodos => prevMetodos.filter(metodo => metodo.id !== id));
       }
     });
   };
 
   const resetMetodoPagoForm = () => {
-    setNuevoMetodo({ nombreMetodoPago: '' });
+    setNuevoMetodo({ nombremetodopago: '' });
     setEditarMetodo(null);
   };
   
@@ -214,7 +214,7 @@ const MetodoPago = () => {
 
   const handleEditClick = (metodo) => {
     setEditarMetodo(metodo);
-    setNuevoMetodo({ nombreMetodoPago: metodo.nombreMetodoPago });
+    setNuevoMetodo({ nombremetodopago: metodo.nombremetodopago });
   };
 
 
@@ -223,7 +223,7 @@ const MetodoPago = () => {
   }
 
   const filteredMetodosPago = metodosPago.filter((metodo) =>
-    metodo.nombreMetodoPago && metodo.nombreMetodoPago.toLowerCase().includes(searchTerm.toLowerCase())
+    metodo.nombremetodopago && metodo.nombremetodopago.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const sortedMetodosPago = [...filteredMetodosPago].sort((a, b) => {
@@ -306,9 +306,9 @@ const MetodoPago = () => {
   
           <TextField
             label="Nombre del Método de Pago"
-            value={nuevoMetodo.nombreMetodoPago}
+            value={nuevoMetodo.nombremetodopago}
             onChange={(e) =>
-              setNuevoMetodo({ ...nuevoMetodo, nombreMetodoPago: e.target.value })
+              setNuevoMetodo({ ...nuevoMetodo, nombremetodopago: e.target.value })
             }
             fullWidth
             margin="normal"
@@ -497,11 +497,11 @@ const MetodoPago = () => {
                     display="flex"
                     alignItems="center"
                     gap={1}
-                    onClick={() => handleSort('nombreMetodoPago')}
+                    onClick={() => handleSort('nombremetodopago')}
                     sx={{ cursor: 'pointer' }}
                   >
                     Nombre del Método de Pago
-                    {sortBy === 'nombreMetodoPago' &&
+                    {sortBy === 'nombremetodopago' &&
                       (sortOrder === 'asc' ? (
                         <ArrowUpward fontSize="small" />
                       ) : (
@@ -519,14 +519,14 @@ const MetodoPago = () => {
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((metodo) => (
                   <TableRow
-                    key={metodo._id}
+                    key={metodo.id}
                     sx={{
                       '&:hover': {
                         backgroundColor: '#fff0f5',
                       },
                     }}
                   >
-                    <TableCell>{metodo.nombreMetodoPago}</TableCell>
+                    <TableCell>{metodo.nombremetodopago}</TableCell>
                     <TableCell align="center">
                       <IconButton
                         onClick={() => handleEditClick(metodo)}
@@ -540,7 +540,7 @@ const MetodoPago = () => {
                         <Edit />
                       </IconButton>
                       <IconButton
-                        onClick={() => eliminarMetodoPago(metodo._id)}
+                        onClick={() => eliminarMetodoPago(metodo.id)}
                         sx={{
                           color: '#e57373',
                           '&:hover': {

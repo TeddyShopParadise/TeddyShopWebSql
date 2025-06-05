@@ -44,7 +44,7 @@ const Empleado = () => {
     dniEmpleado: '',
     telefonoEmpleado: '',
     nombreEmpleado: '',
-    compania: '',
+    compania_id: '',
   });
   const [empleados, setEmpleados] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -109,9 +109,9 @@ const Empleado = () => {
 
   // Crear un nuevo empleado
   const crearEmpleado = async () => {
-    const { dniEmpleado, telefonoEmpleado, nombreEmpleado, compania } = formData;
+    const { dniEmpleado, telefonoEmpleado, nombreEmpleado, compania_id } = formData;
     
-    if (!dniEmpleado || !telefonoEmpleado || !nombreEmpleado || !compania) {
+    if (!dniEmpleado || !telefonoEmpleado || !nombreEmpleado || !compania_id) {
       await Swal.fire({
         icon: 'error',
         title: 'Campos incompletos',
@@ -171,9 +171,9 @@ const Empleado = () => {
   };
   
   const actualizarEmpleado = async () => {
-    const { dniEmpleado, telefonoEmpleado, nombreEmpleado, compania } = formData;
+    const { dniEmpleado, telefonoEmpleado, nombreEmpleado, compania_id } = formData;
     
-    if (!editingId || !dniEmpleado || !telefonoEmpleado || !nombreEmpleado || !compania) {
+    if (!editingId || !dniEmpleado || !telefonoEmpleado || !nombreEmpleado || !compania_id) {
       await Swal.fire({
         icon: 'error',
         title: 'Campos incompletos',
@@ -277,12 +277,12 @@ const Empleado = () => {
   };
   
   const editarEmpleado = (empleado) => {
-    setEditingId(empleado._id);
+    setEditingId(empleado.id);
     setFormData({
       dniEmpleado: empleado.dniEmpleado || '',
       telefonoEmpleado: empleado.telefonoEmpleado || '',
       nombreEmpleado: empleado.nombreEmpleado || '',
-      compania: empleado.compania || ''
+      compania_id: empleado.compania_id || ''
     });
   };
 
@@ -334,7 +334,7 @@ const Empleado = () => {
       dniEmpleado: '',
       telefonoEmpleado: '',
       nombreEmpleado: '',
-      compania: '',
+      compania_id: '',
     });
     setEditingId(null);
   };
@@ -504,14 +504,14 @@ const Empleado = () => {
               >
                 <InputLabel>Compañía</InputLabel>
                 <Select
-                  name="compania"
-                  value={formData.compania || ''}
-                  onChange={(e) => setFormData({ ...formData, compania: e.target.value })}
+                  name="compania_id"
+                  value={formData.compania_id || ''}
+                  onChange={(e) => setFormData({ ...formData, compania_id: e.target.value })}
                   displayEmpty
                 >
                   <MenuItem value="" disabled>Selecciona una Compañía</MenuItem>
                   {companias.map((comp) => (
-                    <MenuItem key={comp._id} value={comp._id}>
+                    <MenuItem key={comp.id} value={comp.id}>
                       {comp.nombreEmpresa}
                     </MenuItem>
                   ))}
@@ -748,7 +748,7 @@ const Empleado = () => {
               <TableBody>
                 {paginatedEmpleados.map((empleado) => (
                   <TableRow
-                    key={empleado._id}
+                    key={empleado.id}
                     sx={{
                       '&:hover': {
                         backgroundColor: '#fff0f5',
@@ -771,7 +771,7 @@ const Empleado = () => {
                         <Edit />
                       </IconButton>
                       <IconButton
-                        onClick={() => eliminarEmpleado(empleado._id)}
+                        onClick={() => eliminarEmpleado(empleado.id)}
                         sx={{
                           color: '#e57373',
                           '&:hover': {
@@ -834,25 +834,26 @@ const Empleado = () => {
                 fontFamily: '"Baloo 2", "Comic Sans MS", cursive',
               }}
             >
-              Detalles del Empleado
-            </DialogTitle>
-            <DialogContent>
-              {selectedEmpleado && (
-                <Box sx={{ color: '#666' }}>
-                  <Typography sx={{ mb: 1 }}>
-                    <strong style={{color: '#b04e6f'}}>Nombre:</strong> {selectedEmpleado.nombreEmpleado}
-                  </Typography>
-                  <Typography sx={{ mb: 1 }}>
-                    <strong style={{color: '#b04e6f'}}>DNI:</strong> {selectedEmpleado.dniEmpleado}
-                  </Typography>
-                  <Typography sx={{ mb: 1 }}>
-                    <strong style={{color: '#b04e6f'}}>Compañía:</strong> {selectedEmpleado.compania ? selectedEmpleado.compania.nombreEmpresa : 'No disponible'}
-                  </Typography>
-                </Box>
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button 
+                Detalles del Empleado
+              </DialogTitle>
+              <DialogContent>
+                {selectedEmpleado && (
+                  <Box sx={{ color: '#666' }}>
+                    <Typography sx={{ mb: 1 }}>
+                      <strong style={{color: '#b04e6f'}}>Nombre:</strong> {selectedEmpleado.nombreEmpleado}
+                    </Typography>
+                    <Typography sx={{ mb: 1 }}>
+                      <strong style={{color: '#b04e6f'}}>DNI:</strong> {selectedEmpleado.dniEmpleado}
+                    </Typography>
+                    <Typography sx={{ mb: 1 }}>
+                      <strong style={{color: '#b04e6f'}}>Compañía:</strong> {selectedEmpleado.companias ? selectedEmpleado.companias.nombreempresa : 'No disponible'}
+
+                    </Typography>
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button 
                 onClick={handleCloseDialog}
                 sx={{
                   borderRadius: '12px',

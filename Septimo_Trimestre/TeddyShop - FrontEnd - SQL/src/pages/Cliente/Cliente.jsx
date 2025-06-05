@@ -129,7 +129,7 @@
   // ...
 
     const handleEdit = (cliente) => {
-      setSelectedClientId(cliente._id);
+      setSelectedClientId(cliente.id);
       setFormData({
         nombrecliente: cliente.nombrecliente,
         telefonocliente: cliente.telefonocliente,
@@ -396,7 +396,7 @@
                 {filteredClientes
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((cliente) => (
-                  <TableRow key={cliente._id}
+                  <TableRow key={cliente.id}
                       sx={{
                         '&:hover': {
                           backgroundColor: '#fff0f5',
@@ -418,7 +418,7 @@
                         <Edit />
                       </IconButton>
                       <IconButton
-                        onClick={() => eliminarCliente(cliente._id)}
+                        onClick={() => eliminarCliente(cliente.id)}
                         sx={{
                           color: '#ff4081',
                           '&:hover': {
@@ -483,7 +483,7 @@
                       <strong style={{color: '#b04e6f'}}>Teléfono:</strong> {selectedCliente.telefonocliente}
                     </Typography>
                     <Typography sx={{ mb: 1 }}>
-                      <strong style={{color: '#b04e6f'}}>Pedidos:</strong> {selectedCliente.pedidos.map(p => p._id).join(", ")}
+                      <strong style={{color: '#b04e6f'}}>Pedidos:</strong> {selectedCliente.pedidos.map(p => p.id).join(", ")}
                     </Typography>
                     <Typography sx={{ mb: 1 }}>
                       <strong style={{color: '#b04e6f'}}>Facturas:</strong>
@@ -491,7 +491,7 @@
                     {selectedCliente?.facturas?.length > 0 ? (
                       selectedCliente.facturas.map((factura) => (
                         <Box 
-                          key={factura._id}
+                          key={factura.id}
                           sx={{
                             p: 1,
                             mb: 1,
@@ -500,7 +500,7 @@
                             backgroundColor: '#fff5f7',
                           }}  
                         >
-                          ID: {factura._id}
+                          ID: {factura.id}
                         </Box>
                       ))
                     ) : (

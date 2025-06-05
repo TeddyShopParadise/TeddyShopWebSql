@@ -9,7 +9,7 @@ console.log("URL de la API:", apiUrl);
 
 const Login = ({ setIsAuthenticated }) => {
   const [email, setEmail] = useState('');
-  const [contraseña, setContraseña] = useState('');
+  const [contrasena, setcontrasena] = useState('');
   const [message, setMessage] = useState('');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -19,14 +19,14 @@ const Login = ({ setIsAuthenticated }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (!email || !contraseña) {
-      setMessage('Por favor, ingresa el correo electrónico y la contraseña.');
+    if (!email || !contrasena) {
+      setMessage('Por favor, ingresa el correo electrónico y la contrasena.');
       setOpen(true);
       return;
     }
 
     setLoading(true);
-    const body = { email, contraseña };
+    const body = { email, contrasena };
     console.log('Cuerpo de la solicitud:', body); 
 
     try {
@@ -141,10 +141,10 @@ const Login = ({ setIsAuthenticated }) => {
         </div>
         <div className="inp">
           <TextField
-            label="Contraseña"
+            label="contrasena"
             type="password"
-            value={contraseña}
-            onChange={(e) => setContraseña(e.target.value)}
+            value={contrasena}
+            onChange={(e) => setcontrasena(e.target.value)}
             className="input"
             fullWidth
           />

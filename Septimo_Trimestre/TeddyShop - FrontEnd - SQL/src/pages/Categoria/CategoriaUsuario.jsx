@@ -85,7 +85,7 @@ export default function CategoriaUsuario() {
           </Typography>
           <Grid container spacing={4}>
             {categorias.map((categoria) => (
-              <Grid item key={categoria._id} xs={12} sm={6} md={4}>
+              <Grid item key={categoria.id} xs={12} sm={6} md={4}>
                 <Card
                   sx={{
                     maxWidth: 345,

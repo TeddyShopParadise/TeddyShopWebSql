@@ -180,7 +180,7 @@ const CategoriaComponent = () => {
   };
 
   const editarCategoria = (categoria) => {
-    setEditingId(categoria._id);
+    setEditingId(categoria.id);
     setNombreCategoria(categoria.nombreCategoria);
     setDescripcionCategoria(categoria.descripcionCategoria);
   };
@@ -439,7 +439,7 @@ const CategoriaComponent = () => {
                 <TableBody>
                   {categorias.slice(currentPage * rowsPerPage, currentPage * rowsPerPage + rowsPerPage).map((categoria) => (
                     <TableRow
-                      key={categoria._id}
+                      key={categoria.id}
                       sx={{
                         '&:hover': {
                           backgroundColor: '#fff0f5',
@@ -461,7 +461,7 @@ const CategoriaComponent = () => {
                           <Edit />
                         </IconButton>
                         <IconButton
-                          onClick={() => eliminarCategoria(categoria._id)}
+                          onClick={() => eliminarCategoria(categoria.id)}
                           sx={{
                             color: '#e57373',
                             '&:hover': {

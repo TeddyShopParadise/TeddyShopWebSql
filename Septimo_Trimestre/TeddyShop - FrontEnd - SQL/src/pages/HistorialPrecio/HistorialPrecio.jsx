@@ -282,7 +282,7 @@ const eliminarHistorialPrecio = async (id) => {
 
   const iniciarEdicion = (historial) => {
     setNuevoHistorial(historial);
-    setEditingId(historial._id);
+    setEditingId(historial.id);
   };
 
   const resetForm = () => {
@@ -574,7 +574,7 @@ const eliminarHistorialPrecio = async (id) => {
                 <TableBody>
                   {historialPrecios.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((historial) => (
                     <TableRow
-                      key={historial._id}
+                      key={historial.id}
                       sx={{
                         '&:hover': {
                           backgroundColor: '#fff0f5',
@@ -616,7 +616,7 @@ const eliminarHistorialPrecio = async (id) => {
                           <Edit />
                         </IconButton>
                         <IconButton
-                          onClick={() => eliminarHistorialPrecio(historial._id)}
+                          onClick={() => eliminarHistorialPrecio(historial.id)}
                           sx={{
                             color: '#e57373',
                             '&:hover': {

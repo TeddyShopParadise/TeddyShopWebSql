@@ -73,7 +73,7 @@ const Devoluciones = () => {
         try {
             // Elimina el campo '_id' para evitar el error del servidor
             const devolucionData = { ...devolucion };
-            delete devolucionData._id;
+            delete devolucionData.id;
             delete devolucionData.__v;
     
             console.log("Datos enviados:", devolucionData);
@@ -132,7 +132,7 @@ const Devoluciones = () => {
     const handleEditClick = (devolucion) => {
         setDevolucion(devolucion);
         setIsEditing(true);
-        setCurrentId(devolucion._id);
+        setCurrentId(devolucion.id);
     };
 
     const handleChangePage = (event, newPage) => {
@@ -244,12 +244,12 @@ const Devoluciones = () => {
                     </TableHead>
                     <TableBody>
                       {sortedDevoluciones.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((d) => (
-                        <TableRow key={d._id} sx={{ '&:hover': { backgroundColor: '#fff0f5' } }}>
+                        <TableRow key={d.id} sx={{ '&:hover': { backgroundColor: '#fff0f5' } }}>
                           <TableCell>{d.detalleDevolucion}</TableCell>
                           <TableCell>{d.inventarios.join(', ')}</TableCell>
                           <TableCell align="center">
-                            <IconButton onClick={() => { setDevolucion(d); setIsEditing(true); setCurrentId(d._id); }} sx={{ color: '#4caf50', '&:hover': { backgroundColor: 'rgba(76,175,80,0.1)' } }}><Edit /></IconButton>
-                            <IconButton onClick={() => { setCurrentId(d._id); setOpenDeleteDialog(true); }} sx={{ color: '#e57373', '&:hover': { backgroundColor: 'rgba(229,115,115,0.1)' } }}><Delete /></IconButton>
+                            <IconButton onClick={() => { setDevolucion(d); setIsEditing(true); setCurrentId(d.id); }} sx={{ color: '#4caf50', '&:hover': { backgroundColor: 'rgba(76,175,80,0.1)' } }}><Edit /></IconButton>
+                            <IconButton onClick={() => { setCurrentId(d.id); setOpenDeleteDialog(true); }} sx={{ color: '#e57373', '&:hover': { backgroundColor: 'rgba(229,115,115,0.1)' } }}><Delete /></IconButton>
                           </TableCell>
                         </TableRow>
                       ))}

@@ -242,11 +242,11 @@ const eliminarFactura = async (id) => {
     setSelectedFactura(null);
   };
 
-  const obtenerNombreMetodoPago = (metodoPagoId) => {
+  const obtenernombremetodopago = (metodoPagoId) => {
     if (!metodoPagoId) return "No especificado"; 
     
-    const metodo = metodosPago.find((m) => m._id === metodoPagoId);
-    return metodo ? metodo.nombreMetodoPago : "No especificado";
+    const metodo = metodosPago.find((m) => m.id === metodoPagoId);
+    return metodo ? metodo.nombremetodopago : "No especificado";
   };
 
   return (
@@ -349,7 +349,7 @@ const eliminarFactura = async (id) => {
                 <TableBody>
                   {facturas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((factura) => (
                     <TableRow
-                      key={factura._id}
+                      key={factura.id}
                       sx={{
                         '&:hover': {
                           backgroundColor: '#fff0f5',
@@ -358,10 +358,10 @@ const eliminarFactura = async (id) => {
                     >
                       <TableCell>{new Date(factura.fechaCreacionFactura).toLocaleDateString()}</TableCell>
                       <TableCell>{factura.horaCreacionFactura}</TableCell>
-                      <TableCell>{factura.pedido?._id || factura.pedido}</TableCell>
+                      <TableCell>{factura.pedido?.id || factura.pedido}</TableCell>
                       <TableCell align="center">
                         <IconButton
-                          onClick={() => obtenerFacturaPorId(factura._id)}
+                          onClick={() => obtenerFacturaPorId(factura.id)}
                           sx={{
                             color: '#4caf50',
                             '&:hover': {
@@ -372,7 +372,7 @@ const eliminarFactura = async (id) => {
                           <Edit />
                         </IconButton>
                         <IconButton
-                          onClick={() => eliminarFactura(factura._id)}
+                          onClick={() => eliminarFactura(factura.id)}
                           sx={{
                             color: '#e57373',
                             '&:hover': {
@@ -444,12 +444,12 @@ const eliminarFactura = async (id) => {
             <DialogContentText sx={{ px: 3, pt: 2, pb: 2, color: '#6f42c1' }}>
               <strong>Pedido: </strong>
               {selectedFactura && selectedFactura.pedido ? 
-                (typeof selectedFactura.pedido === 'object' ? selectedFactura.pedido._id : selectedFactura.pedido) 
+                (typeof selectedFactura.pedido === 'object' ? selectedFactura.pedido.id : selectedFactura.pedido) 
                 : "No disponible"}<br />
               
               <strong>Método de Pago: </strong>
               {selectedFactura && selectedFactura.metodoPago ? 
-                (typeof selectedFactura.metodoPago === 'object' ? selectedFactura.metodoPago.nombreMetodoPago : obtenerNombreMetodoPago(selectedFactura.metodoPago))
+                (typeof selectedFactura.metodoPago === 'object' ? selectedFactura.metodoPago.nombremetodopago : obtenernombremetodopago(selectedFactura.metodoPago))
                 : "No especificado"}<br />
               
               <strong>Fecha: </strong>
@@ -486,22 +486,25 @@ const eliminarFactura = async (id) => {
                   <TableBody>
                     {selectedFactura.detallesFactura.map((detalle, index) => (
                       <TableRow key={index}>
+                      <TableCell>
+                        {detalle.producto
+                          ? `Id:${detalle.idproducto_id}`
+                          : 'Sin producto'}
+                      </TableCell>
+
+                      <TableCell>
+                        {detalle.inventario
+                          ? `Id: ${detalle.idinventario_id}`
+                          : 'Sin inventario'}
+                      </TableCell>
+
+                      <TableCell>{detalle.cantidadDetalleFactura}</TableCell>
+
                         <TableCell>
-                          {detalle.idProducto ? 
-                            (typeof detalle.idProducto === 'object' ? 
-                              (detalle.idProducto._id || detalle.idProducto._id) : 
-                              detalle.idProducto) : 
-                            "N/A"}
-                        </TableCell>
-                        <TableCell>
-                          {detalle.idInventario ? 
-                            (typeof detalle.idInventario === 'object' ? 
-                              (detalle.idInventario._id || detalle.idInventario._id) : 
-                              detalle.idInventario) : 
-                            "N/A"}
-                        </TableCell>
-                        <TableCell>{detalle.cantidadDetalleFactura}</TableCell>
-                        <TableCell>${detalle.precioDetalleFactura}</TableCell>
+                      {detalle.precioDetalleFactura != null
+                        ? `$${parseFloat(detalle.precioDetalleFactura).toFixed(0)}`
+                        : 'N/A'}
+                      </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

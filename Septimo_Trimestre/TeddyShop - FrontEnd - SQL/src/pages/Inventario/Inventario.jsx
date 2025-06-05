@@ -109,7 +109,7 @@ const actualizarInventario = async () => {
     return;
   }
 
-  if (!selectedInventario.idProducto || !selectedInventario.idProducto._id) {
+  if (!selectedInventario.idProducto || !selectedInventario.idProducto.id) {
     await Swal.fire({
       icon: 'error',
       title: 'Error',
@@ -125,11 +125,11 @@ const actualizarInventario = async () => {
     stockMaximo: Number(inventarioData.stockMaximo),
     precioVenta: parseFloat(inventarioData.precioVenta) || 0,
     precioCompra: parseFloat(inventarioData.precioCompra) || 0,
-    idProducto: selectedInventario.idProducto._id
+    idProducto: selectedInventario.idProducto.id
   };
 
   await makeRequest({
-    url: `${apiUrl}/inventario/${selectedInventario._id}`,
+    url: `${apiUrl}/inventario/${selectedInventario.id}`,
     method: 'PUT',
     data: datosActualizados,
     headers: {
@@ -352,7 +352,7 @@ return (
               <TableBody>
                 {inventarios.map((inv) => (
                   <TableRow
-                    key={inv._id}
+                    key={inv.id}
                     sx={{ '&:hover': { backgroundColor: '#fff0f5' } }}
                   >
                     <TableCell align="center">{inv.stock}</TableCell>
@@ -374,7 +374,7 @@ return (
                       <IconButton onClick={() => handleEditClick(inv)} sx={{ color: '#6c63ff', '&:hover': { backgroundColor: 'rgba(108, 99, 255, 0.1)' } }}>
                         <Edit />
                       </IconButton>
-                      <IconButton onClick={() => eliminarInventario(inv._id)} sx={{ color: '#e57373', '&:hover': { backgroundColor: 'rgba(229, 115, 115, 0.1)' } }}>
+                      <IconButton onClick={() => eliminarInventario(inv.id)} sx={{ color: '#e57373', '&:hover': { backgroundColor: 'rgba(229, 115, 115, 0.1)' } }}>
                         <Delete />
                       </IconButton>
                       <IconButton onClick={() => handleOpenDetailDialog(inv)} sx={{ color: '#9c27b0', '&:hover': { backgroundColor: 'rgba(156, 39, 176, 0.1)' } }}>
@@ -414,11 +414,11 @@ return (
             {selectedInventario && (
               <Box sx={{ p: 2 }}>
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                  <strong style={{ color: '#b04e6f' }}>ID Inventario:</strong> {selectedInventario._id}
+                  <strong style={{ color: '#b04e6f' }}>ID Inventario:</strong> {selectedInventario.id}
                 </Typography>
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                  <strong style={{ color: '#b04e6f' }}>ID Producto:</strong> {selectedInventario.idProducto?._id}
-                </Typography>
+      <strong style={{ color: '#b04e6f' }}>ID Producto:</strong> {selectedInventario.producto?.id}
+    </Typography>
                 <Typography variant="body1" sx={{ mb: 2 }}>
                   <strong style={{ color: '#b04e6f' }}>Stock Mínimo:</strong> {selectedInventario.stockMinimo}
                 </Typography>

@@ -31,7 +31,13 @@ import {
   DialogActions,
   MenuItem,
   Checkbox,
-  InputAdornment
+  InputAdornment,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  Divider,
+  Stack 
 } from '@mui/material';
 import sortBy from 'lodash/sortBy';
 import { Edit, Delete, ListAlt, ArrowUpward, ArrowDownward, Info, AddCircle, Save, Cancel, Add, Clear, Search } from '@mui/icons-material';
@@ -49,7 +55,7 @@ const ProductoComponent = () => {
   const [historialPrecios, setHistorialPrecios] = useState([]);
   const [estiloProducto, setEstiloProducto] = useState('');
   const [disponibilidadProducto, setDisponibilidadProducto] = useState('');
-  const [tamañoProducto, setTamañoProducto] = useState('');
+  const [tamanoproducto, settamanoproducto] = useState('');
   const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState([]);
   const [catalogosSeleccionados, setCatalogosSeleccionados] = useState([]);
   const [preciosSeleccionados, setPreciosSeleccionados] = useState([]);
@@ -60,7 +66,8 @@ const ProductoComponent = () => {
   const [selectedProducto, setSelectedProducto] = useState(null);
   const [openInventarioDialog, setOpenInventarioDialog] = useState(false);
   const [newProductId, setNewProductId] = useState(null);
-  const [foundProduct, setFoundProduct] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [foundProduct, setFoundProduct] = useState(true);
 
   const [inventarioData, setInventarioData] = useState({
     stock: 0,
@@ -83,16 +90,19 @@ const ProductoComponent = () => {
     fetchHistorialPrecios(); 
   }, []);
   
-  useEffect(() => {
-    if (searching && searchProductId) {
-      const filtered = productos.filter(producto => 
-        producto._id.toLowerCase().includes(searchProductId.toLowerCase())
-      );
-      setFilteredProductos(filtered);
-    } else {
-      setFilteredProductos(productos);
-    }
-  }, [productos, searchProductId, searching]);
+ useEffect(() => {
+  if (searching && searchProductId) {
+    // Buscamos el primer producto cuyo ID contenga la cadena
+    const match = productos.find(p =>
+      p.id.toString().toLowerCase().includes(searchProductId.toLowerCase())
+    );
+
+    setFoundProduct(match || null);
+  } else {
+    // Al resetear la búsqueda, limpiamos el producto encontrado
+    setFoundProduct(null);
+  }
+}, [productos, searchProductId, searching]);
 
   const fetchProductos = async () => {
     try {
@@ -162,11 +172,11 @@ const ProductoComponent = () => {
     
     setSearching(true);
     const filtered = productos.filter(producto => 
-      producto._id.toLowerCase().includes(searchProductId.toLowerCase())
+      producto.id.toLowerCase().includes(searchProductId.toLowerCase())
     );
     
     const exactMatch = productos.find(producto => 
-      producto._id.toLowerCase() === searchProductId.toLowerCase()
+      producto.id.toLowerCase() === searchProductId.toLowerCase()
     );
     
     if (exactMatch) {
@@ -222,7 +232,7 @@ const ProductoComponent = () => {
   const { makeRequest } = useApiRequest();
 
   const crearProducto = async () => {
-    if (!estiloProducto || !disponibilidadProducto || !tamañoProducto || 
+    if (!estiloProducto || !disponibilidadProducto || !tamanoproducto || 
         categoriasSeleccionadas.length === 0 || catalogosSeleccionados.length === 0) {
       await Swal.fire('Error', 'Por favor, completa todos los campos.', 'error');
       return;
@@ -231,7 +241,7 @@ const ProductoComponent = () => {
     const productoData = {
       estiloProducto,
       disponibilidadProducto,
-      tamañoProducto,
+      tamanoproducto,
       categorias: categoriasSeleccionadas,
       catalogos: catalogosSeleccionados,
       historialPrecios: preciosSeleccionados,
@@ -250,10 +260,11 @@ const ProductoComponent = () => {
       error: {
         title: 'Error',
         text: (error) => error.message || 'Error al crear el producto',
-        icon: 'error'
+        icon: 'error',
+        
       },
       onSuccess: (data) => {
-        setNewProductId(data._id);
+        setNewProductId(data.id);
         setOpenInventarioDialog(true);
       }
     });
@@ -269,7 +280,7 @@ const ProductoComponent = () => {
     const productoData = {
       estiloProducto,
       disponibilidadProducto,
-      tamañoProducto,
+      tamanoproducto,
       imagen: imagenProducto,
       categorias: categoriasSeleccionadas || [],
       catalogos: catalogosSeleccionados,
@@ -339,16 +350,16 @@ const ProductoComponent = () => {
       },
       onSuccess: () => {
         fetchProductos();
-        setProductos(prev => prev.filter(p => p._id !== id));
+        setProductos(prev => prev.filter(p => p.id !== id));
       }
     });
   };
   
   const editarProducto = (producto) => {
-    setEditingId(producto._id);
+    setEditingId(producto.id);
     setEstiloProducto(producto.estiloProducto || '');
     setDisponibilidadProducto(producto.disponibilidadProducto || 0);
-    setTamañoProducto(producto.tamañoProducto || '');
+    settamanoproducto(producto.tamanoproducto || '');
     setImagenProducto(producto.imagen || '');
     const categorias = Array.isArray(producto.categorias) ? producto.categorias : [];
     const catalogos = Array.isArray(producto.catalogos) ? producto.catalogos : [];
@@ -365,7 +376,7 @@ const ProductoComponent = () => {
 
       let response;
       if (inventarioExistente) {
-        response = await fetch(`${apiUrl}/inventario/${inventarioExistente._id}`, {
+        response = await fetch(`${apiUrl}/inventario/${inventarioExistente.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...inventarioData, idProducto: productId })
@@ -417,7 +428,7 @@ const ProductoComponent = () => {
   const resetForm = () => {
     setEstiloProducto('');
     setDisponibilidadProducto(0);
-    setTamañoProducto('');
+    settamanoproducto('');
     setImagenProducto('');
     setCategoriasSeleccionadas([]);
     setCatalogosSeleccionados([]);
@@ -550,8 +561,8 @@ const ProductoComponent = () => {
             />
   
             <TextField
-              value={tamañoProducto}
-              onChange={(e) => setTamañoProducto(e.target.value)}
+              value={tamanoproducto}
+              onChange={(e) => settamanoproducto(e.target.value)}
               label="Tamaño"
               fullWidth
               margin="normal"
@@ -592,7 +603,7 @@ const ProductoComponent = () => {
                 onChange={(e) => setCategoriasSeleccionadas(e.target.value)}
                 label="Categorías"
                 renderValue={(selected) => selected.map(id => {
-                  const categoria = categorias.find(cat => cat._id === id);
+                  const categoria = categorias.find(cat => cat.id === id);
                   return categoria ? categoria.nombreCategoria : "";
                 }).join(", ")}
                 MenuProps={{
@@ -605,7 +616,7 @@ const ProductoComponent = () => {
                 }}
               >
                 {categorias.map((cat) => (
-                  <MenuItem key={cat._id} value={cat._id}>
+                  <MenuItem key={cat.id} value={cat.id}>
                     {cat.nombreCategoria}
                   </MenuItem>
                 ))}
@@ -634,7 +645,7 @@ const ProductoComponent = () => {
                 onChange={(e) => setCatalogosSeleccionados(e.target.value)}
                 label="Catálogos"
                 renderValue={(selected) => selected.map(id => {
-                  const catalogo = catalogos.find(cat => cat._id === id);
+                  const catalogo = catalogos.find(cat => cat.id === id);
                   return catalogo ? catalogo.nombreCatalogo : "";
                 }).join(", ")}
                 MenuProps={{
@@ -647,7 +658,7 @@ const ProductoComponent = () => {
                 }}
               >
                 {catalogos.map((cat) => (
-                  <MenuItem key={cat._id} value={cat._id}>
+                  <MenuItem key={cat.id} value={cat.id}>
                     {cat.nombreCatalogo}
                   </MenuItem>
                 ))}
@@ -677,7 +688,7 @@ const ProductoComponent = () => {
                 label="Precio Histórico"
                 renderValue={(selected) => 
                   selected.map(id => {
-                    const precio = historialPrecios.find(p => p._id === id);
+                    const precio = historialPrecios.find(p => p.id === id);
                     return precio ? new Intl.NumberFormat('es-CO', { 
                       style: 'currency', 
                       currency: 'COP' 
@@ -686,7 +697,7 @@ const ProductoComponent = () => {
                 }
               >
                 {historialPrecios.map((precio) => (
-                  <MenuItem key={precio._id} value={precio._id}>
+                  <MenuItem key={precio.id} value={precio.id}>
                     {new Intl.NumberFormat('es-CO', { 
                       style: 'currency', 
                       currency: 'COP' 
@@ -736,47 +747,47 @@ const ProductoComponent = () => {
               </Box>
             )}
   
-            <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-              <Button
-                variant="contained"
-                onClick={editingId ? actualizarProducto : crearProducto}
-                startIcon={editingId ? <Edit /> : <Add />}
-                sx={{
-                  borderRadius: '12px',
-                  backgroundColor: '#f48fb1',
-                  '&:hover': {
-                    backgroundColor: '#ec7096',
-                  },
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  boxShadow: '0 4px 8px rgba(244, 143, 177, 0.3)',
-                }}
-              >
-                {editingId ? 'Actualizar Producto' : 'Crear Producto'}
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={resetForm}
-                startIcon={<Clear />}
-                sx={{
-                  borderRadius: '12px',
-                  borderColor: '#f48fb1',
-                  color: '#f48fb1',
-                  '&:hover': {
-                    borderColor: '#ec7096',
-                    backgroundColor: 'rgba(244, 143, 177, 0.08)',
-                  },
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                }}
-              >
-                Cancelar
-              </Button>
-            </Box>
-          </Box>
-        </Paper>
+                    <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
+                      <Button
+                        variant="contained"
+                        onClick={editingId ? actualizarProducto : crearProducto}
+                        startIcon={editingId ? <Edit /> : <Add />}
+                        sx={{
+                          borderRadius: '12px',
+                          backgroundColor: '#f48fb1',
+                          '&:hover': {
+                            backgroundColor: '#ec7096',
+                          },
+                          textTransform: 'none',
+                          fontWeight: 'bold',
+                          boxShadow: '0 4px 8px rgba(244, 143, 177, 0.3)',
+                        }}
+                      >
+                        {editingId ? 'Actualizar Producto' : 'Crear Producto'}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        onClick={resetForm}
+                        startIcon={<Clear />}
+                        sx={{
+                          borderRadius: '12px',
+                          borderColor: '#f48fb1',
+                          color: '#f48fb1',
+                          '&:hover': {
+                            borderColor: '#ec7096',
+                            backgroundColor: 'rgba(244, 143, 177, 0.08)',
+                          },
+                          textTransform: 'none',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </Box>
+                  </Box>
+                </Paper>
   
-                        <Paper
+                <Paper
                   elevation={3}
                   sx={{
                     padding: '20px',
@@ -867,119 +878,129 @@ const ProductoComponent = () => {
                       </Button>
                     </Box>
                   </Box>
-                  
-                  {foundProduct && (
-                    <Paper 
-                      elevation={2} 
-                      sx={{ 
-                        mt: 2, 
-                        p: 2, 
-                        backgroundColor: '#fff0f5',
-                        borderRadius: '12px',
-                        border: '1px solid #f8c8dc'
-                      }}
-                    >
-                      <Typography variant="subtitle1" sx={{ color: '#b04e6f', mb: 1 }}>
-                        Producto encontrado:
-                      </Typography>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography><strong>ID:</strong> {foundProduct._id}</Typography>
-                          <Typography><strong>Descripción:</strong> {foundProduct.estiloProducto}</Typography>
-                          <Typography><strong>Tamaño:</strong> {foundProduct.tamañoProducto}</Typography>
-                        </Box>
-                        <Box>
-                          <IconButton
-                            onClick={() => editarProducto(foundProduct)}
-                            sx={{
-                              color: '#4caf50',
-                              '&:hover': {
-                                backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                              },
-                            }}
-                          >
-                            <Edit />
-                          </IconButton>
-                          <IconButton
-                            onClick={() => eliminarProducto(foundProduct._id)}
-                            sx={{
-                              color: '#e57373',
-                              '&:hover': {
-                                backgroundColor: 'rgba(229, 115, 115, 0.1)',
-                              },
-                            }}
-                          >
-                            <Delete />
-                          </IconButton>
-                          <IconButton
-                            onClick={() => openDetailsDialog(foundProduct)}
-                            sx={{
-                              color: '#6c63ff',
-                              '&:hover': {
-                                backgroundColor: 'rgba(108, 99, 255, 0.1)',
-                              },
-                            }}
-                          >
-                            <Info />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  )}
-  
-          {searching && !foundProduct && (
-            <Typography 
-              variant="body2" 
-              sx={{ mt: 2, color: '#b04e6f', fontStyle: 'italic' }}
-            >
-              {filteredProductos.length} producto(s) encontrado(s)
-            </Typography>
-          )}
-        </Paper>
-  
-        <Paper
-          elevation={2}
-          sx={{
-            padding: '20px',
-            borderRadius: '20px',
-            marginBottom: '20px',
-            backgroundColor: '#fff0f5',
-            position: 'relative',
-            overflow: 'hidden',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: '0',
-              left: '0',
-              width: '100%',
-              height: '5px',
-              background: 'linear-gradient(90deg, #f8c8dc 0%, #f8bbd0 50%, #f8c8dc 100%)',
-            },
-          }}
-        >
-          <Typography
-            variant="h6"
+             {searching && foundProduct && (
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 1,
+                    mb: 1,
+                    borderRadius: '12px',
+                    border: '1px solid #f8c8dc',
+                    backgroundColor: '#fff0f5',
+                  }}
+                >
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: '#b04e6f',
+                      fontFamily: 'Baloo 2, cursive',
+                      textAlign: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    Producto encontrado
+                  </Typography>
+
+                <TableContainer component={Paper} elevation={0} sx={{ background: 'transparent' }}>
+                  <Table size="small" aria-label="detalle producto">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ color: '#b04e6f', fontWeight: 'bold', py: 0.5 }}>ID</TableCell>
+                        <TableCell sx={{ color: '#b04e6f', fontWeight: 'bold', py: 0.5 }}>Tamaño</TableCell>
+                        <TableCell sx={{ color: '#b04e6f', fontWeight: 'bold', py: 0.5 }}>Disponibilidad</TableCell>
+                        {foundProduct.HistorialPrecio && (
+                          <TableCell sx={{ color: '#b04e6f', fontWeight: 'bold', py: 0.5 }}>Precio</TableCell>
+                        )}
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      <TableRow>
+                        <TableCell sx={{ py: 0.5 }}>{foundProduct.id}</TableCell>
+                        <TableCell sx={{ py: 0.5 }}>{foundProduct.tamanoproducto || 'N/D'}</TableCell>
+                        <TableCell sx={{ py: 0.5 }}>{foundProduct.disponibilidadProducto} u.</TableCell>
+                        {foundProduct.HistorialPrecio && (
+                          <TableCell sx={{ py: 0.5 }}>
+                            {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(foundProduct.HistorialPrecio.precio)}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                <Box sx={{ textAlign: 'right', mt: 0.5 }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => editarProducto(foundProduct)}
+                    sx={{ color: '#4caf50', p: 0.5 }}
+                  >
+                    <Edit fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => eliminarProducto(foundProduct.id)}
+                    sx={{ color: '#e57373', p: 0.5 }}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => openDetailsDialog(foundProduct)}
+                    sx={{ color: '#6c63ff', p: 0.5 }}
+                  >
+                    <Info fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Paper>
+            )}
+
+
+          </Paper>
+    
+          <Paper
+            elevation={2}
             sx={{
-              marginBottom: '15px',
-              color: '#b04e6f',
-              fontFamily: '"Baloo 2", "Comic Sans MS", cursive',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <ListAlt fontSize="small" /> Lista de Productos
-          </Typography>
-  
-          <TableContainer
-            component={Paper}
-            elevation={3}
-            sx={{
-              borderRadius: '15px',
+              padding: '20px',
+              borderRadius: '20px',
+              marginBottom: '20px',
+              backgroundColor: '#fff0f5',
+              position: 'relative',
               overflow: 'hidden',
-              border: '1px solid #f8c8dc',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: '0',
+                left: '0',
+                width: '100%',
+                height: '5px',
+                background: 'linear-gradient(90deg, #f8c8dc 0%, #f8bbd0 50%, #f8c8dc 100%)',
+              },
             }}
           >
+            <Typography
+              variant="h6"
+              sx={{
+                marginBottom: '15px',
+                color: '#b04e6f',
+                fontFamily: '"Baloo 2", "Comic Sans MS", cursive',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <ListAlt fontSize="small" /> Lista de Productos
+            </Typography>
+    
+            <TableContainer
+              component={Paper}
+              elevation={3}
+              sx={{
+                borderRadius: '15px',
+                overflow: 'hidden',
+                border: '1px solid #f8c8dc',
+              }}
+            >
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#ffeef3' }}>
@@ -993,14 +1014,14 @@ const ProductoComponent = () => {
                   .slice(currentPage * rowsPerPage, currentPage * rowsPerPage + rowsPerPage)
                   .map((producto) => (
                     <TableRow 
-                      key={producto._id}
+                      key={producto.id}
                       sx={{
                         '&:hover': {
                           backgroundColor: '#fff0f5',
                         },
                       }}
                     >
-                      <TableCell>{producto.tamañoProducto}</TableCell>
+                      <TableCell>{producto.tamanoproducto}</TableCell>
                       <TableCell>{producto.disponibilidadProducto}</TableCell>
                       <TableCell align="center">
                         <IconButton
@@ -1015,7 +1036,7 @@ const ProductoComponent = () => {
                           <Edit />
                         </IconButton>
                         <IconButton
-                          onClick={() => eliminarProducto(producto._id)}
+                          onClick={() => eliminarProducto(producto.id)}
                           sx={{
                             color: '#e57373',
                             '&:hover': {
@@ -1071,90 +1092,92 @@ const ProductoComponent = () => {
             }
           }}
         >
-          <DialogTitle
-            sx={{
-              backgroundColor: '#ffeef3',
-              color: '#b04e6f',
-              fontFamily: '"Baloo 2", "Comic Sans MS", cursive',
-              borderBottom: '1px solid #f8c8dc',
-            }}
-          >
-            Detalles del Producto
-          </DialogTitle>
-          <DialogContent>
-            {selectedProducto && (
-              <Box sx={{ p: 2 }}>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  <strong style={{color: '#b04e6f'}}>Descripción:</strong> {selectedProducto.estiloProducto}
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  <strong style={{color: '#b04e6f'}}>Tamaño:</strong> {selectedProducto.tamañoProducto}
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  <strong style={{color: '#b04e6f'}}>Disponibilidad:</strong> {selectedProducto.disponibilidadProducto}
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 2 }}>
-                  <strong style={{color: '#b04e6f'}}>Precio:</strong>
-                  {selectedProducto.historialPrecios && selectedProducto.historialPrecios.length > 0 ? (
-                    selectedProducto.historialPrecios.map((precioId, index) => {
-                      const precio = historialPrecios.find(p => p._id === precioId);
-                      return (
-                        <div key={index}>
-                          {precio ? (
-                            new Intl.NumberFormat('es-CO', { 
-                              style: 'currency', 
-                              currency: 'COP' 
-                            }).format(precio.precio)
-                          ) : (
-                            <span>Precio no disponible</span>
-                          )}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div>No hay precios históricos disponibles.</div>
-                  )}
-                </Typography>
-                {selectedProducto.imagen && (
-                  <Box mt={2} display="flex" justifyContent="center">
-                    <img 
-                      src={selectedProducto.imagen} 
-                      alt="Imagen del Producto" 
-                      style={{  
-                        width: '100%',
-                        maxHeight: '300px',
-                        objectFit: "contain", 
-                        borderRadius: "12px", 
-                        border: "2px solid #f8c8dc", 
-                        boxShadow: "0 4px 12px rgba(248, 200, 220, 0.4)",
-                      }}  
-                    />
-                  </Box>
-                )}
-              </Box>
-            )}
-          </DialogContent>
-          <DialogActions
-            sx={{
-              backgroundColor: '#ffeef3',
-              borderTop: '1px solid #f8c8dc',
-            }}
-          >
-            <Button
-              onClick={closeDetailsDialog}
-              sx={{
-                color: '#f48fb1',
-                fontWeight: 'bold',
-                '&:hover': {
-                  backgroundColor: 'rgba(244, 143, 177, 0.1)',
-                },
+        <DialogTitle
+    sx={{
+      backgroundColor: '#ffeef3',
+      borderBottom: '1px solid #f8c8dc',
+      color: '#b04e6f',
+      fontWeight: 'bold',
+      fontSize: '1.5rem',
+      textAlign: 'center',
+      fontFamily: 'Baloo 2, cursive',
+    }}
+  >
+    Detalles del Producto
+  </DialogTitle>
+
+  <DialogContent sx={{ backgroundColor: '#fff0f5' }}>
+    {selectedProducto && (
+      <Box sx={{ p: 2 }}>
+        <Typography variant="body1" sx={{ mb: 1.5 }}>
+          <strong style={{ color: '#b04e6f' }}>Descripción:</strong> {selectedProducto.estiloProducto}
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 1.5 }}>
+          <strong style={{ color: '#b04e6f' }}>Tamaño:</strong> {selectedProducto.tamanoproducto || 'No especificado'}
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 1.5 }}>
+          <strong style={{ color: '#b04e6f' }}>Disponibilidad:</strong> {selectedProducto.disponibilidadProducto} unidades
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          <strong style={{ color: '#b04e6f' }}>Precio actual:</strong>{" "}
+          {selectedProducto.HistorialPrecio ? (
+            new Intl.NumberFormat('es-CO', {
+              style: 'currency',
+              currency: 'COP'
+            }).format(selectedProducto.HistorialPrecio.precio)
+          ) : (
+            "No hay precio asignado."
+          )}
+        </Typography>
+
+        {selectedProducto.imagen && (
+          <Box mt={2} display="flex" justifyContent="center">
+            <img
+              src={selectedProducto.imagen}
+              alt="Imagen del Producto"
+              style={{
+                width: '100%',
+                maxHeight: '300px',
+                objectFit: 'contain',
+                borderRadius: '16px',
+                border: '2px dashed #f8c8dc',
+                boxShadow: '0 6px 16px rgba(248, 200, 220, 0.5)',
+                backgroundColor: '#fff',
+                padding: '8px',
               }}
-            >
-              Cerrar
-            </Button>
-          </DialogActions>
-        </Dialog>
-  
+            />
+          </Box>
+        )}
+      </Box>
+    )}
+  </DialogContent>
+
+        <DialogActions
+          sx={{
+            backgroundColor: '#ffeef3',
+            borderTop: '1px solid #f8c8dc',
+            justifyContent: 'center',
+          }}
+        >
+          <Button
+            onClick={closeDetailsDialog}
+            sx={{
+              color: '#fff',
+              backgroundColor: '#f48fb1',
+              fontWeight: 'bold',
+              px: 3,
+              borderRadius: '20px',
+              '&:hover': {
+                backgroundColor: '#f06292',
+              },
+              fontFamily: 'Baloo 2, cursive',
+            }}
+          >
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
+        
         <Dialog
           open={openConfirmDialog}
           onClose={() => {

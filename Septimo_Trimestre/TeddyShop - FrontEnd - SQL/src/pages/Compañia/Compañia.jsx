@@ -262,7 +262,7 @@
     };
 
     const editarCompania = (compania) => {
-      setEditingId(compania._id);
+      setEditingId(compania.id);
       setNIT(compania.NIT);
       setTelefonoEmpresa(compania.telefonoEmpresa);
       setNombreEmpresa(compania.nombreEmpresa);
@@ -608,7 +608,7 @@
                   <TableBody>
                     {companias.map((comp) => (
                       <TableRow
-                        key={comp._id}
+                        key={comp.id}
                         sx={{
                           '&:hover': {
                             backgroundColor: '#fff0f5',
@@ -642,7 +642,7 @@
                             <Edit />
                           </IconButton>
                           <IconButton
-                            onClick={() => eliminarCompania(comp._id)}
+                            onClick={() => eliminarCompania(comp.id)}
                             sx={{
                               color: '#e57373',
                               '&:hover': {

@@ -324,7 +324,7 @@ const Movimientos = () => {
                   .slice(currentPage * rowsPerPage, currentPage * rowsPerPage + rowsPerPage)
                   .map((movimiento) => (
                     <TableRow 
-                      key={movimiento._id}
+                      key={movimiento.id}
                       sx={{
                         '&:hover': {
                           backgroundColor: '#fff0f5',
@@ -361,11 +361,11 @@ const Movimientos = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        {movimiento.inventario?._id || 'N/A'}
+                        {movimiento.inventario?.id || 'N/A'}
                       </TableCell>
                       <TableCell align="center">
                         <IconButton
-                          onClick={() => handleDelete(movimiento._id)}
+                          onClick={() => handleDelete(movimiento.id)}
                           sx={{
                             color: '#e57373',
                             '&:hover': {
@@ -471,7 +471,7 @@ const Movimientos = () => {
                 </Typography>
                 <Typography variant="body1">
                   <strong style={{ color: '#b04e6f' }}>Inventario:</strong>{' '}
-                  {selectedMovimiento.inventario?._id || 'N/A'}
+                  {selectedMovimiento.inventario?.id || 'N/A'}
                 </Typography>
               </Box>
             )}

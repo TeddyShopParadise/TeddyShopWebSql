@@ -264,11 +264,11 @@ const CatalogoComponent = () => {
   };
 
   const editarCatalogo = (catalogo) => {
-    setEditingId(catalogo._id); 
+    setEditingId(catalogo.id); 
     setNombreCatalogo(catalogo.nombreCatalogo);
     setDescripcionCatalogo(catalogo.descripcionCatalogo || '');
     setDisponibilidadCatalogo(catalogo.disponibilidadCatalogo);
-    setCompaniaSeleccionada(catalogo.compania._id || catalogo.compania);
+    setCompaniaSeleccionada(catalogo.compania.id || catalogo.compania);
     setImagenCatalogo(catalogo.imagen || null);
   };
 
@@ -451,7 +451,7 @@ const CatalogoComponent = () => {
                   label="Compañía"
                 >
                   {companias.map((comp) => (
-                    <MenuItem key={comp._id} value={comp._id}>
+                    <MenuItem key={comp.id} value={comp.id}>
                       {comp.nombreEmpresa}
                     </MenuItem>
                   ))}
@@ -595,7 +595,7 @@ const CatalogoComponent = () => {
                 <TableBody>
                   {catalogos.slice(currentPage * rowsPerPage, currentPage * rowsPerPage + rowsPerPage).map((catalogo) => (
                     <TableRow
-                      key={catalogo._id}
+                      key={catalogo.id}
                       sx={{
                         '&:hover': {
                           backgroundColor: '#fff0f5',
@@ -603,7 +603,7 @@ const CatalogoComponent = () => {
                       }}
                     >
                       <TableCell>{catalogo.nombreCatalogo}</TableCell>
-                      <TableCell>{catalogo.compania?.nombreEmpresa || 'Sin compañía'}</TableCell>
+                      <TableCell>{catalogo.compania?.nombreempresa || 'Sin compañía'}</TableCell>
                       <TableCell align="center">
                         <IconButton
                           onClick={() => editarCatalogo(catalogo)}
@@ -617,7 +617,7 @@ const CatalogoComponent = () => {
                           <Edit />
                         </IconButton>
                         <IconButton
-                          onClick={() => eliminarCatalogo(catalogo._id)}
+                          onClick={() => eliminarCatalogo(catalogo.id)}
                           sx={{
                             color: '#e57373',
                             '&:hover': {
@@ -694,8 +694,9 @@ const CatalogoComponent = () => {
                 <strong style={{color: '#b04e6f'}}>Nombre:</strong> {selectedCatalogo.nombreCatalogo}
               </Typography>
               <Typography variant="body1" sx={{ mb: 2 }}>
-                <strong style={{color: '#b04e6f'}}>Compañía:</strong> {selectedCatalogo.compania?.nombreEmpresa || 'Sin compañía'}
-              </Typography>
+              <strong style={{color: '#b04e6f'}}>Compañía:</strong> {selectedCatalogo.compania?.nombreempresa || 'Sin compañía'}
+            </Typography>
+
               <Typography variant="body1" sx={{ mb: 2 }}>
                 <strong style={{color: '#b04e6f'}}>Descripción:</strong> {selectedCatalogo.descripcionCatalogo || 'Sin descripción'}
               </Typography>
@@ -705,14 +706,16 @@ const CatalogoComponent = () => {
                   <img 
                     src={selectedCatalogo.imagen} 
                     alt="Imagen del catálogo" 
-                    style={{  
-                      width: '100%',
-                      maxHeight: '300px',
-                      objectFit: "contain", 
-                      borderRadius: "12px", 
-                      border: "2px solid #f8c8dc", 
-                      boxShadow: "0 4px 12px rgba(248, 200, 220, 0.4)",
-                    }}  
+                    style={{
+                    width: '100%',
+                    maxHeight: '300px',
+                    objectFit: 'contain',
+                    borderRadius: '16px',
+                    border: '2px dashed #f8c8dc',
+                    boxShadow: '0 6px 16px rgba(248, 200, 220, 0.5)',
+                    backgroundColor: '#fff',
+                    padding: '8px',
+                  }}
                   />
                 </Box>
               )}

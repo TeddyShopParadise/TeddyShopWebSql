@@ -43,7 +43,7 @@ const Usuarios = () => {
   const [usuarios, setUsuarios] = useState([]);
   const [empleados, setEmpleados] = useState([]);
   const [filteredUsuarios, setFilteredUsuarios] = useState([]);
-  const [usuario, setUsuario] = useState({ email: '', contraseña: '', username: '', roles: [], empleados: [], estado: true });
+  const [usuario, setUsuario] = useState({ email: '', contrasena: '', username: '', rol_id: [], empleado_id: [], estado: true });
   const [roles, setRoles] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -115,7 +115,7 @@ const Usuarios = () => {
   };
 
 const crearUsuario = async () => {
-  if (!usuario.email || !usuario.contraseña || !usuario.username) {
+  if (!usuario.email || !usuario.contrasena || !usuario.username) {
     await Swal.fire({
       icon: 'error',
       title: 'Campos incompletos',
@@ -134,8 +134,8 @@ const crearUsuario = async () => {
 
   const usuarioData = {
     ...usuario,
-    roles: Array.isArray(usuario.roles) ? usuario.roles.map(id => id) : [],
-    empleados: Array.isArray(usuario.empleados) ? usuario.empleados.map(id => id) : []
+    rol_id: Array.isArray(usuario.rol_id) ? usuario.rol_id.map(id => id) : [],
+    empleado_id: Array.isArray(usuario.empleado_id) ? usuario.empleado_id.map(id => id) : []
   };
 
   await makeRequest({
@@ -179,7 +179,7 @@ const crearUsuario = async () => {
 };
 
 const actualizarUsuario = async () => {
-  if (!usuario.email || !usuario.contraseña || !usuario.username) {
+  if (!usuario.email || !usuario.contrasena || !usuario.username) {
     await Swal.fire({
       icon: 'error',
       title: 'Campos incompletos',
@@ -198,14 +198,14 @@ const actualizarUsuario = async () => {
 
   const usuarioData = {
     email: usuario.email,
-    contraseña: usuario.contraseña,
+    contrasena: usuario.contrasena,
     username: usuario.username,
     estado: usuario.estado,
-    roles: Array.isArray(usuario.roles) 
-      ? usuario.roles.map(role => typeof role === 'object' ? role._id : role) 
+    rol_id: Array.isArray(usuario.rol_id) 
+      ? usuario.rol_id.map(role => typeof role === 'object' ? role.id : role) 
       : [],
-    empleados: Array.isArray(usuario.empleados) 
-      ? usuario.empleados.map(empleado => typeof empleado === 'object' ? empleado._id : empleado) 
+      empleado_id: Array.isArray(usuario.empleado_id) 
+      ? usuario.empleado_id.map(empleado => typeof empleado === 'object' ? empleado.id : empleado) 
       : []
   };
 
@@ -289,7 +289,7 @@ const eliminarUsuario = async (id) => {
 };
 
 const resetUsuarioForm = () => {
-setUsuario({ email: '', contraseña: '', username: '', roles: [], empleados: [], estado: true });
+setUsuario({ email: '', contrasena: '', username: '', rol_id: [], empleado_id: [], estado: true });
 
   setEditingId(null);
 };
@@ -300,16 +300,16 @@ setUsuario({ email: '', contraseña: '', username: '', roles: [], empleados: [],
    const handleEditClick = (usuario) => { 
     setUsuario({ 
       ...usuario, 
-      roles: Array.isArray(usuario.roles) ? usuario.roles.map(role => role._id) : [], 
-      empleados: Array.isArray(usuario.empleados) ? usuario.empleados.map(empleado => empleado._id) : []  
+      rol_id: Array.isArray(usuario.roles) ? usuario.rol_id.map(role => role.id) : [], 
+      empleado_id: Array.isArray(usuario.empleado_id) ? usuario.empleado_id.map(empleado => empleado.id) : []  
     }); 
-    setEditingId(usuario._id); 
+    setEditingId(usuario.id); 
   };
    const handleChangeRoles = (event) => {
-    setUsuario({ ...usuario, roles: event.target.value });
+    setUsuario({ ...usuario, rol_id: event.target.value });
   };
   const handleChangeEmpleados = (event) => {
-    setUsuario({ ...usuario, empleados: event.target.value });
+    setUsuario({ ...usuario, empleado_id: event.target.value });
   };
 
   const handleCloseSnackbar = () => {
@@ -447,9 +447,9 @@ setUsuario({ email: '', contraseña: '', username: '', roles: [], empleados: [],
             />
   
             <TextField
-              label="Contraseña"
-              name="contraseña"
-              value={usuario.contraseña}
+              label="contrasena"
+              name="contrasena"
+              value={usuario.contrasena}
               onChange={handleInputChange}
               fullWidth
               margin="normal"
@@ -511,11 +511,11 @@ setUsuario({ email: '', contraseña: '', username: '', roles: [], empleados: [],
               <InputLabel>Roles</InputLabel>
               <Select 
                 multiple 
-                value={usuario.roles || []} 
+                value={usuario.rol_id || []} 
                 onChange={handleChangeRoles}
               >
                 {roles.map((rol) => (
-                  <MenuItem key={rol._id} value={rol._id}>
+                  <MenuItem key={rol.id} value={rol.id}>
                     {rol.nombre}
                   </MenuItem>
                 ))}
@@ -540,11 +540,11 @@ setUsuario({ email: '', contraseña: '', username: '', roles: [], empleados: [],
               <InputLabel>Empleados</InputLabel>
               <Select 
                 multiple 
-                value={usuario.empleados || []} 
+                value={usuario.empleado_id || []} 
                 onChange={handleChangeEmpleados}
               >
                 {empleados.map((empleado) => (
-                  <MenuItem key={empleado._id} value={empleado._id}>
+                  <MenuItem key={empleado.id} value={empleado.id}>
                     {empleado.nombreEmpleado}
                   </MenuItem>
                 ))}
@@ -763,7 +763,7 @@ setUsuario({ email: '', contraseña: '', username: '', roles: [], empleados: [],
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((usuario) => (
                       <TableRow
-                        key={usuario._id}
+                        key={usuario.id}
                         sx={{
                           '&:hover': {
                             backgroundColor: '#fff0f5',
@@ -796,7 +796,7 @@ setUsuario({ email: '', contraseña: '', username: '', roles: [], empleados: [],
                             <Edit />
                           </IconButton>
                           <IconButton
-                            onClick={() => eliminarUsuario(usuario._id)}
+                            onClick={() => eliminarUsuario(usuario.id)}
                             sx={{
                               color: '#e57373',
                               '&:hover': {
@@ -851,17 +851,17 @@ setUsuario({ email: '', contraseña: '', username: '', roles: [], empleados: [],
               Detalles de Usuario
             </DialogTitle>
             <DialogContent>
-              <DialogContentText sx={{ color: '#666' }}>
-                <strong style={{color: '#b04e6f'}}>Empleado asociado:</strong>{" "}
-                {selectedUsuario?.empleados && selectedUsuario.empleados.length > 0
-                  ? selectedUsuario.empleados.map((empleado) => empleado.nombreEmpleado).join(", ")
-                  : "Sin Empleado"}
-                <br />
-                <strong style={{color: '#b04e6f'}}>Rol Asociado:</strong>{" "}
-                {selectedUsuario?.roles && selectedUsuario.roles.length > 0
-                  ? selectedUsuario.roles.map((rol) => rol.nombre).join(", ")
-                  : "Sin roles"}
-              </DialogContentText>
+            <DialogContentText sx={{ color: '#666' }}>
+            <strong style={{color: '#b04e6f'}}>Empleado asociado:</strong>{" "}
+            {selectedUsuario?.empleado
+              ? selectedUsuario.empleado.nombreempleado
+              : "Sin Empleado"}
+            <br />
+            <strong style={{color: '#b04e6f'}}>Rol Asociado:</strong>{" "}
+            {selectedUsuario?.rol
+              ? selectedUsuario.rol.nombre
+              : "Sin roles"}
+          </DialogContentText>
             </DialogContent>
             <DialogActions>
               <Button 

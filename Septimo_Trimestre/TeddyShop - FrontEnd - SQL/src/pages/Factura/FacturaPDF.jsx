@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, Button, Typography, Box, Table, TableBody, TableCell, TableHead, TableRow, Grid } from '@mui/material';
 import { LocationOn, Phone, Print } from '@mui/icons-material';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -6,7 +6,8 @@ import FacturaPDFExport from './FacturaPDFExport';
 
 
 const FacturaPDF = ({ factura, open, onClose, pedido, compania }) => {
-  console.log("Datos de la factura:", factura); 
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5); 
   if (!factura || !pedido) return null;
 
   return (
@@ -174,32 +175,38 @@ const FacturaPDF = ({ factura, open, onClose, pedido, compania }) => {
               </TableRow>
             </TableHead>
             
-            <TableBody>
-  {factura.detallesFactura?.map((item, index) => (
-    <TableRow key={index}>
-      <TableCell sx={{ minWidth: 200 }}>
-        <Typography sx={{ fontWeight: 500 }}>
-          {/* Corregido para acceder correctamente a los datos del producto */}
-          {item.idProducto?._id && `  ${item.idProducto._id}`}
-        </Typography>
-      </TableCell>
-      
-      <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-          {item.idProducto?.tamañoProducto && `  ${item.idProducto.tamañoProducto}`}
-      </TableCell>
-      <TableCell align="right">{item.cantidadDetalleFactura}</TableCell>
-      
-      <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-        ${typeof item.precioDetalleFactura === 'number' 
-          ? item.precioDetalleFactura.toLocaleString("es-CO") 
-          : parseFloat(item.precioDetalleFactura || 0).toLocaleString("es-CO")}
-      </TableCell>
-     
-      <TableCell align="right" sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-        ${(parseFloat(item.precioDetalleFactura || 0) * (item.cantidadDetalleFactura || 1)).toLocaleString("es-CO")}
-      </TableCell>
-    </TableRow>
-  ))}
+           <TableBody>
+  {pedido?.detallesPedido
+    ?.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+    .map((detalle, index) => {
+      const cantidad = Number(detalle.cantidadDetallePedido) || 1;
+      const precioUnitario = Number(detalle.producto?.HistorialPrecio?.precio) || 0;
+      const total = precioUnitario * cantidad;
+
+      return (
+        <TableRow key={detalle.id || index}>
+          <TableCell sx={{ minWidth: 200 }}>
+            <Typography sx={{ fontWeight: 500 }}>
+              {detalle.producto?.estiloproducto || `ID: ${detalle.producto?.id || 'Producto eliminado'}`}
+            </Typography>
+          </TableCell>
+
+          <TableCell align="right">
+            {detalle.producto?.tamanoproducto || 'Sin tamaño'}
+          </TableCell>
+
+          <TableCell align="right">{cantidad}</TableCell>
+
+          <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+            ${precioUnitario.toLocaleString("es-CO")}
+          </TableCell>
+
+          <TableCell align="right" sx={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+            ${total.toLocaleString("es-CO")}
+          </TableCell>
+        </TableRow>
+      );
+    })}
 </TableBody>
 
           </Table>
@@ -212,18 +219,18 @@ const FacturaPDF = ({ factura, open, onClose, pedido, compania }) => {
           boxShadow: 2
         }}>
           <Box textAlign="right" mb={3}>
-            <Typography variant="h5" sx={{ 
-              color: 'primary.main',
-              fontSize: { xs: '1.25rem', md: '1.5rem' }
-            }}>
-              Total General: ${factura.detallesFactura?.reduce(
-                (sum, item) => sum + (item.precioDetalleFactura * item.cantidadDetalleFactura), 
-                0
-              )?.toLocaleString('es-CO')}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', md: '0.8rem' } }}>
-              Fecha: {new Date(factura.fechaCreacionFactura).toLocaleDateString()} - Hora: {factura.horaCreacionFactura}
-            </Typography>
+          <Typography variant="h5" sx={{ 
+  color: 'primary.main',
+  fontSize: { xs: '1.25rem', md: '1.5rem' }
+}}>
+  Total General: {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(
+  factura.detallesFactura?.reduce(
+    (sum, item) => sum + (item.precioDetalleFactura * item.cantidadDetalleFactura),
+    0
+  )
+)}
+</Typography>
+
           </Box>
 
           <Box display="flex" justifyContent="flex-end" gap={2} flexDirection={{ xs: 'column', sm: 'row' }}>
@@ -270,7 +277,7 @@ const FacturaPDF = ({ factura, open, onClose, pedido, compania }) => {
           <Typography variant="caption" sx={{ fontSize: { xs: '0.7rem', md: '0.8rem' } }}>
             © {new Date().getFullYear()} {compania?.nombreEmpresa} - Todos los derechos reservados<br/>
             <Box component="span" sx={{ fontSize: '0.75rem' }}>
-              Factura electrónica válida como documento tributario
+              Desprendible de pedido 
             </Box>
           </Typography>
         </Box>
