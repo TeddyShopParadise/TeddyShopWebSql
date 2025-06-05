@@ -34,13 +34,13 @@ const {
  *                   cantidadDetalleFactura:
  *                     type: number
  *                     example: 2
- *                   idInventario:
+ *                   idInventario_id:
  *                     type: string
  *                     example: "60d2b6e3e6b0f99dbe0c5a7a"
- *                   idProducto:
+ *                   idProducto_id:
  *                     type: string
  *                     example: "60d2b6e3e6b0f99dbe0c5a7b"
- *                   idFactura:
+ *                   idFactura_id:
  *                     type: string
  *                     example: "60d2b6e3e6b0f99dbe0c5a7c"
  *       500:
@@ -70,13 +70,13 @@ router.get('/', listarDetallesFactura);
  *               cantidadDetalleFactura:
  *                 type: number
  *                 example: 2
- *               idInventario:
+ *               idInventario_id:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7a"
- *               idProducto:
+ *               idProducto_id:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7b"
- *               idFactura:
+ *               idFactura_id:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7c"
  *     responses:
@@ -118,13 +118,13 @@ router.post('/', crearDetalleFactura);
  *               cantidadDetalleFactura:
  *                 type: number
  *                 example: 2
- *               idInventario:
+ *               idInventario_id:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7a"
- *               idProducto:
+ *               idProducto_id:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7b"
- *               idFactura:
+ *               idFactura_id:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7c"
  *     responses:

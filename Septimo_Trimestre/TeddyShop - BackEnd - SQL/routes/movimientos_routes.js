@@ -53,7 +53,7 @@ const {
  *                   cantidadVendida:
  *                     type: number
  *                     example: 50
- *                   inventario:
+ *                   inventario_id:
  *                     type: string
  *                     example: "60d2b6e3e6b0f99dbe0c5a7a"
  *       500:
@@ -87,7 +87,7 @@ router.get('/', listarMovimientos);
  *               cantidadVendida:
  *                 type: number
  *                 example: 50
- *               inventario:
+ *               inventario_id:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7a"
  *     responses:
@@ -159,7 +159,7 @@ router.get('/:id', obtenerMovimientoPorId);
  *               cantidadVendida:
  *                 type: number
  *                 example: 50
- *               inventario:
+ *               inventario_id:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7a"
  *     responses:

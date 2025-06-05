@@ -21,9 +21,9 @@ const router = express.Router();
  *               email:
  *                 type: string
  *                 example: "usuario@ejemplo.com"
- *               contraseña:
+ *               contrasena:
  *                 type: string
- *                 example: "Contraseña123"
+ *                 example: "contrasena123"
  *     responses:
  *       200:
  *         description: Login exitoso, devuelve un token de autenticación
@@ -36,7 +36,7 @@ const router = express.Router();
  *                   type: string
  *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1YjA1ZDZkMzYwN2JlZmVjYjAxYzk4YjciLCJyb2xlcyI6WyJhZG1pbiJdLCJpYXQiOjE2MjU4MjczMjksImV4cCI6MTYyNTg4MTAzMn0.t3oMySy9IuKjgncABFG1uQNoQg1vnoeKvmyjKQGVaLw"
  *       400:
- *         description: Error en las credenciales proporcionadas (usuario no encontrado o contraseña incorrecta)
+ *         description: Error en las credenciales proporcionadas (usuario no encontrado o contrasena incorrecta)
  *       500:
  *         description: Error interno del servidor
  */

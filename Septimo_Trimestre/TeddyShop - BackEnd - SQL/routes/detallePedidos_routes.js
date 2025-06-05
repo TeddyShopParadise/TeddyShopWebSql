@@ -36,10 +36,10 @@ const {
  *                     example: 3
  *                   idPedido:
  *                     type: string
- *                     example: "60d2b6e3e6b0f99dbe0c5a79"
- *                   idProducto:
+ *                     example: ["60d2b6e3e6b0f99dbe0c5a79"  ]
+ *                   idProducto_id:
  *                     type: string
- *                     example: "60d2b6e3e6b0f99dbe0c5a7a"
+ *                     example: ["60d2b6e3e6b0f99dbe0c5a7a"]
  *       500:
  *         description: Error interno del servidor
  */
@@ -69,10 +69,10 @@ router.get('/', listarDetallesPedido);
  *                 example: 3
  *               idPedido:
  *                 type: string
- *                 example: "60d2b6e3e6b0f99dbe0c5a79"
- *               idProducto:
+ *                 example: [ "60d2b6e3e6b0f99dbe0c5a79" ]
+ *               idProducto_id:
  *                 type: string
- *                 example: "60d2b6e3e6b0f99dbe0c5a7a"
+ *                 example: [ "60d2b6e3e6b0f99dbe0c5a7a" ]
  *     responses:
  *       201:
  *         description: Detalle de pedido creado exitosamente
@@ -115,7 +115,7 @@ router.post('/', crearDetallePedido);
  *               idPedido:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a79"
- *               idProducto:
+ *               idProducto_id:
  *                 type: string
  *                 example: "60d2b6e3e6b0f99dbe0c5a7a"
  *     responses:

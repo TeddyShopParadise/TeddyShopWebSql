@@ -45,7 +45,7 @@ const authorizeAccess = require('../middlewares/authorizeAccess');
  *                   disponibilidadProducto:
  *                     type: Number
  *                     example: "Disponible"
- *                   tamañoProducto:
+ *                   tamanoproducto:
  *                     type: string
  *                     example: "Mediano"
  *                   imagen:
@@ -93,7 +93,7 @@ router.get('/', productoController.listarProductos);
  *               disponibilidadProducto:
  *                 type: Number
  *                 example: "Disponible"
- *               tamañoProducto:
+ *               tamanoproducto:
  *                 type: string
  *                 example: "Mediano"
  *               imagen:
@@ -175,7 +175,7 @@ router.get('/:id', productoController.obtenerProductoPorId);
  *               disponibilidadProducto:
  *                 type: Number
  *                 example: "Disponible"
- *               tamañoProducto:
+ *               tamanoproducto:
  *                 type: string
  *                 example: "Mediano"
  *               imagen:

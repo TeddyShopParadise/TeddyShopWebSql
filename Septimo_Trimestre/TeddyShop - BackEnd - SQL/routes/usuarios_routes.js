@@ -87,7 +87,7 @@ router.get('/', listarUsuarios);
  *                 example: "usuario@example.com"
  *               contrasena:
  *                 type: string
- *                 example: "miContraseñaSegura"
+ *                 example: "micontrasenaSegura"
  *               username:
  *                 type: string
  *                 example: "usuario1"
@@ -141,7 +141,7 @@ router.post('/', crearUsuario);
  *                 example: "usuario@example.com"
  *               contrasena:
  *                 type: string
- *                 example: "miContraseñaSegura"
+ *                 example: "micontrasenaSegura"
  *               username:
  *                 type: string
  *                 example: "usuario1"
