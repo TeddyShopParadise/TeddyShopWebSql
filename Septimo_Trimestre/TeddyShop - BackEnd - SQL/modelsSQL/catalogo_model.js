@@ -23,7 +23,7 @@
         imagen: {
           type: DataTypes.STRING(255)
         },
-        companiaId: {
+        compania_id: {
           type: DataTypes.INTEGER,
           field: 'compania_id'
         }
@@ -49,7 +49,8 @@
     
         // Relación uno a muchos con Compañía
         Catalogo.belongsTo(models.Compania, {
-          foreignKey: 'compania_id'
+          foreignKey: 'compania_id',
+           as: 'compania'
         });
       };
     

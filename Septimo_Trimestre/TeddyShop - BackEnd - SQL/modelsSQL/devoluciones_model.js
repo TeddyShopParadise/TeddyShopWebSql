@@ -22,8 +22,8 @@ module.exports = (sequelize) => {
   Devoluciones.associate = (models) => {
     Devoluciones.hasMany(models.Inventario, {
       foreignKey: {
-        name: 'devolucion_id',
-        allowNull: false
+        name: 'iddevolucion_id',
+        allowNull: true
       },
       as: 'inventarios'
     });

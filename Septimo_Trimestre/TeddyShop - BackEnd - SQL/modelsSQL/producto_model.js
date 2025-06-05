@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
         min: 0
       }
     },
-    tamañoProducto: {
+    tamanoproducto: {
       type: DataTypes.STRING(50),
       allowNull: true,
       field: 'tamanoproducto'
@@ -31,7 +31,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'historialprecio', // Nombre de la tabla en minúsculas
+        model: 'historialprecio', 
         key: 'id'
       },
       field: 'historial_precio_id'

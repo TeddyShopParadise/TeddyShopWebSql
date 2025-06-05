@@ -1,4 +1,3 @@
-// modelsSQL/detalle_pedido_model.js
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -11,12 +10,21 @@ module.exports = (sequelize) => {
     precioDetallePedido: {
       type: DataTypes.DECIMAL(10,2),
       allowNull: false,
-      field: 'preciodetallepedido'
+      field: 'preciodetallepedido' // Nombre real en la BD
     },
     cantidadDetallePedido: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'cantidaddetallepedido'
+      field: 'cantidaddetallepedido' // Nombre real en la BD
+    },
+    // Agregar explícitamente las claves foráneas como atributos
+    idpedido_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    idproducto_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     }
   }, {
     tableName: 'detallepedido',
@@ -26,17 +34,11 @@ module.exports = (sequelize) => {
 
   DetallePedido.associate = (models) => {
     DetallePedido.belongsTo(models.Pedido, {
-      foreignKey: {
-        name: 'pedido_id',
-        allowNull: false
-      },
+      foreignKey: 'idpedido_id', // Simplificado
       as: 'pedido'
     });
     DetallePedido.belongsTo(models.Producto, {
-      foreignKey: {
-        name: 'producto_id',
-        allowNull: false
-      },
+      foreignKey: 'idproducto_id', // Simplificado
       as: 'producto'
     });
   };

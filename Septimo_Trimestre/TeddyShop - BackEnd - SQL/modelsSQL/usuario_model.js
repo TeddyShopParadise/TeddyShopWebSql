@@ -34,7 +34,7 @@ module.exports = (sequelize) => {
     Usuario.belongsTo(models.Empleado, {
       foreignKey: {
         name: 'empleado_id',
-        allowNull: true // O true/false según tu lógica
+        allowNull: true 
       },
       as: 'empleado'
     });

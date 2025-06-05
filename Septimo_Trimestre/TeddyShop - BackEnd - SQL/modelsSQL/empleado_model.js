@@ -6,13 +6,13 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true
       },
       dniEmpleado: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT,
         allowNull: false,
         unique: true,
         field: 'dniempleado'
       },
       telefonoEmpleado: {
-        type: DataTypes.STRING,
+        type: DataTypes.BIGINT,
         allowNull: false,
         field: 'telefonoempleado'
       },
@@ -28,8 +28,8 @@ module.exports = (sequelize, DataTypes) => {
   
     Empleado.associate = (models) => {
       Empleado.belongsTo(models.Compania, {
-        foreignKey: 'companiaId',
-        as: 'compania'
+        foreignKey: 'compania_id',
+        as: 'companias'
       });
       
     };

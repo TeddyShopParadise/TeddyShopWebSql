@@ -41,7 +41,7 @@ module.exports = (sequelize) => {
       allowNull: true
     },
     estado: {
-      type: DataTypes.ENUM('pendiente', 'en_proceso', 'realizado'),
+      type: DataTypes.ENUM('cancelado', 'en_proceso', 'realizado'),
       defaultValue: 'en_proceso'
     }
   }, {
@@ -59,8 +59,9 @@ module.exports = (sequelize) => {
       as: 'cliente'
     });
     Pedido.hasMany(models.DetallePedido, {
-      foreignKey: 'pedido_id',
-      as: 'detallesPedido'
+      foreignKey: 'idpedido_id',
+      as: 'detallesPedido',
+      field: 'idpedido_id',
     });
     Pedido.hasMany(models.Factura, {
       foreignKey: 'pedido_id',

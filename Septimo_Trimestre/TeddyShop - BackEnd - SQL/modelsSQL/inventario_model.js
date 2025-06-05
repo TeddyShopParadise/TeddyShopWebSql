@@ -40,11 +40,11 @@ module.exports = (sequelize) => {
 
   Inventario.associate = (models) => {
     Inventario.belongsTo(models.Devoluciones, {
-      foreignKey: { name: 'devolucion_id', allowNull: true },
+      foreignKey: { name: 'iddevolucion_id', allowNull: true },
       as: 'devolucion'
     });
     Inventario.belongsTo(models.Producto, {
-      foreignKey: { name: 'producto_id', allowNull: false },
+      foreignKey: { name: 'idproducto_id', allowNull: false },
       as: 'producto'
     });
     Inventario.hasMany(models.Movimiento, {
@@ -52,7 +52,7 @@ module.exports = (sequelize) => {
       as: 'movimientos'
     });
     Inventario.hasMany(models.DetalleFactura, {
-      foreignKey: { name: 'inventario_id', allowNull: false },
+      foreignKey: { name: 'idinventario_id', allowNull: false },
       as: 'detalleFacturas'
     });
   };

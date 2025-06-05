@@ -27,21 +27,21 @@ module.exports = (sequelize) => {
   DetalleFactura.associate = (models) => {
     DetalleFactura.belongsTo(models.Factura, {
       foreignKey: {
-        name: 'factura_id',
+        name: 'idfactura_id',
         allowNull: false
       },
       as: 'factura'
     });
     DetalleFactura.belongsTo(models.Producto, {
       foreignKey: {
-        name: 'producto_id',
+        name: 'idproducto_id',
         allowNull: false
       },
       as: 'producto'
     });
     DetalleFactura.belongsTo(models.Inventario, {
       foreignKey: {
-        name: 'inventario_id',
+        name: 'idinventario_id',
         allowNull: false
       },
       as: 'inventario'

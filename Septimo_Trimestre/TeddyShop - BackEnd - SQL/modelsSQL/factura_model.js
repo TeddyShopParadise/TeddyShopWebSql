@@ -48,7 +48,7 @@ module.exports = (sequelize) => {
     });
     Factura.hasMany(models.DetalleFactura, {
       foreignKey: {
-        name: 'factura_id',
+        name: 'idfactura_id',
         allowNull: false
       },
       as: 'detallesFactura'

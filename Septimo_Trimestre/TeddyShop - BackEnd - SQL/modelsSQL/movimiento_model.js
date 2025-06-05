@@ -14,7 +14,7 @@ module.exports = (sequelize) => {
     },
     cantidadIngreso: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       field: 'cantidadingreso'
     },
     cantidadVendida: {
